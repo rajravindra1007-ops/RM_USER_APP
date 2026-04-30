@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1061531520387",
+    "project_id": "rmapp-7ab9e",
+    "storage_bucket": "rmapp-7ab9e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1061531520387:android:46284667d2648f32adbab6",
+        "android_client_info": {
+          "package_name": "com.moneshsutar.userAppRM"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKQcdCyzdWXpjl-6gPtxOF7h4yoqOfBEM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
