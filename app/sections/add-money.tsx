@@ -4,7 +4,7 @@ import { ActivityIndicator, Alert, Image, Linking, Modal, StyleSheet, Text, Text
 import { WebView } from 'react-native-webview'
 import { auth, db } from '../../firebaseConfig'
 
-const CREATE_ORDER_URL = 'http://10.238.52.212:4000/api/add-money/create-add-money-order'
+const CREATE_ORDER_URL = 'https://rmgames.live/api/add-money/create-add-money-order'
 
 export default function AddMoneySection() {
   const router = useRouter()
@@ -59,8 +59,8 @@ const openUpiAppSafely = async (url: string, appName: string) => {
 
   const startPayment = async () => {
     const amt = Number(amount)
-    if (!amt || isNaN(amt) || amt < 300) {
-      Alert.alert('Invalid amount', 'Minimum add amount is ₹300')
+    if (!amt || isNaN(amt) || amt <=1) {
+      Alert.alert('Invalid amount', 'Minimum add amount is ₹ 1')
       return
     }
     const user = auth.currentUser
@@ -94,7 +94,7 @@ const openUpiAppSafely = async (url: string, appName: string) => {
       }
       if (mobile10 && mobile10.length === 10) {
         payload.customer_mobile = mobile10
-        payload.customer_email = user.email || `${mobile10}@userapp.com`
+        payload.customer_email = user.email || `${mobile10}@userapp.com` 
       } else {
         // Avoid sending empty mobile; use email or uid-based fallback
         payload.customer_email = user.email || `${user.uid}@userapp.com`
@@ -217,7 +217,7 @@ const openUpiAppSafely = async (url: string, appName: string) => {
       </Modal>
       <Text style={styles.title}>Wallet Balance</Text>
             <Text style={styles.title2}>Adding Time is 24 Hrs Open</Text>
-                        <Text style={styles.title2}>Min Ammount 300 RS</Text>
+                        <Text style={styles.title2}>Min Ammount 1 RS</Text>
 
 
       <Text style={styles.balance}>₹ {wallet}</Text>
