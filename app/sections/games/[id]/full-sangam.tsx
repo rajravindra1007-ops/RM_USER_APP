@@ -240,6 +240,15 @@ export default function FullSangamScreen() {
   const addEntry = () => {
     if (!openPana || !PANAS.includes(openPana)) { Alert.alert('Select open pana'); return }
     if (!closePana || !PANAS.includes(closePana)) { Alert.alert('Select close pana'); return }
+    
+       if (
+              !points.trim() ||
+              isNaN(Number(points)) ||
+              Number(points) < 5
+            ) {
+              Alert.alert('Invalid Points', 'Please enter points 5 or greater')
+              return
+            }
     if (!checkPoints(points)) { Alert.alert('Enter valid points'); return }
     const pts = Number(points)
     // Allow adding regardless of current wallet; final check happens on submit

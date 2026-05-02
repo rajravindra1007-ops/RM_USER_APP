@@ -242,6 +242,16 @@ export default function HalfSangamScreen() {
     if (!checkDigit(openDigit)) { Alert.alert('Invalid open digit'); return }
     if (!openPana || !PANAS.includes(openPana)) { Alert.alert('Select valid close pana'); return }
     if (!checkPoints(openPoints)) { Alert.alert('Invalid points'); return }
+
+            if (
+          !openPoints.trim() ||
+          isNaN(Number(openPoints)) ||
+          Number(openPoints) < 5
+        ) {
+          Alert.alert('Invalid Points', 'Please enter points 5 or greater')
+          return
+        }
+    
     const pts = Number(openPoints)
     // Allow adding regardless of current wallet; final check happens on submit
     const entry = { id: Date.now().toString(), number: `${openDigit}-${openPana}`, points: pts, game: 'open' }

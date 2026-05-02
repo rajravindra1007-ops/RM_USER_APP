@@ -168,6 +168,13 @@ export default function JodiDigitsScreen() {
       return
     }
 
+     const value = Number(points)
+    
+    if (!points.trim() || isNaN(value) || value < 5) {
+      Alert.alert('Invalid Points', 'Minimum amount is 5')
+      return
+    }
+
     const totalAdded = bids.reduce((sum, bid) => sum + Number(bid.points), 0)
     const totalRequired = totalAdded + Number(points)
 
@@ -403,7 +410,11 @@ export default function JodiDigitsScreen() {
                     <Text style={styles.confirmCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.confirmSaveBtn} onPress={onConfirmSubmit} disabled={submitting}>
-                    <Text style={styles.confirmSaveText}>Save</Text>
+                     {submitting ? (
+                        <ActivityIndicator color="#ffffff" />
+                      ) : (
+                        <Text style={styles.confirmSaveText}>Save</Text>
+                      )}
                   </TouchableOpacity>
                 </View>
               </View>

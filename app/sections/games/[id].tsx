@@ -357,7 +357,7 @@ infoText: {
   color: '#ffffff',
   fontSize: 14,
   textAlign:'center',
-  fontWeight: '500',
+  fontWeight: '800',
 },
 walletBar: {
   borderRadius: 10,

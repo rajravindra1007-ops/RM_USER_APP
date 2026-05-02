@@ -221,6 +221,12 @@ export default function SingleDigitScreen() {
       Alert.alert('Invalid Points', 'Please enter valid points')
       return
     }
+      const value = Number(points)
+
+      if (!points.trim() || isNaN(value) || value < 5) {
+        Alert.alert('Invalid Points', 'Minimum amount is 5')
+        return
+      }
 
     // Calculate total points already added (no wallet check here; will validate on submit)
     const totalAdded = bids.reduce((sum, bid) => sum + Number(bid.points), 0)
@@ -461,7 +467,7 @@ export default function SingleDigitScreen() {
 
                 <View style={styles.confirmRowResponsive}>
                   <View style={styles.confirmCol}>
-                    <Text style={styles.confirmLabelSmall}>Wallet before</Text>
+                    <Text style={styles.confirmLabelSmall}>Wallet before </Text>
                     <Text style={styles.confirmValueSmall}>{wallet.toFixed(2)}</Text>
                   </View>
                   <View style={styles.confirmCol}>
@@ -477,7 +483,11 @@ export default function SingleDigitScreen() {
                     <Text style={styles.confirmCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.confirmSaveBtn} onPress={onConfirmSubmit} disabled={submitting}>
-                    <Text style={styles.confirmSaveText}>Save</Text>
+                     {submitting ? (
+                        <ActivityIndicator color="#ffffff" />
+                      ) : (
+                        <Text style={styles.confirmSaveText}>Save</Text>
+                      )}
                   </TouchableOpacity>
                 </View>
               </View>

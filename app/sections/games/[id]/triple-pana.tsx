@@ -256,6 +256,13 @@ export default function TriplePanaScreen() {
       return
     }
 
+     const value = Number(points)
+        
+          if (!points.trim() || isNaN(value) || value < 5) {
+            Alert.alert('Invalid Points', 'Minimum amount is 5')
+            return
+          }
+
     // Allow adding bids freely; final wallet validation happens on Submit
 
     const newBid: Bid = {
@@ -533,7 +540,11 @@ export default function TriplePanaScreen() {
                     <Text style={styles.confirmCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.confirmSaveBtn} onPress={performSubmit} disabled={submitting}>
-                    <Text style={styles.confirmSaveText}>Save</Text>
+                     {submitting ? (
+                          <ActivityIndicator color="#ffffff" />
+                        ) : (
+                          <Text style={styles.confirmSaveText}>Save</Text>
+                        )}
                   </TouchableOpacity>
                 </View>
               </View>

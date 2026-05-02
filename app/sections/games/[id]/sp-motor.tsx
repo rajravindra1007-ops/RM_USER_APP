@@ -247,6 +247,16 @@ export default function SpMotor() {
       return
     }
 
+     const value = Number(points)
+        
+      if (!points.trim() || isNaN(value) || value < 5) {
+        setAddLoading(false)
+        Alert.alert('Invalid Points', 'Minimum amount is 5')
+        return
+      }else{
+        setAddLoading(false)
+      }
+
     if (digits.length < 4 || digits.length > 9) {
       setAddLoading(false)
       Alert.alert('Invalid Number', 'Enter At least 4 - 9 digits for SP Motor.')
@@ -257,6 +267,8 @@ export default function SpMotor() {
       Alert.alert('Invalid Points', 'Please enter valid points.')
       return
     }
+
+     
 
     // use precomputed matches (computed while typing) to speed up Add
     const matches = preMatches
@@ -536,7 +548,11 @@ export default function SpMotor() {
                     <Text style={styles.confirmCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.confirmSaveBtn} onPress={performSubmit} disabled={submitLoading}>
-                    <Text style={styles.confirmSaveText}>Save</Text>
+                     {submitLoading ? (
+                            <ActivityIndicator color="#ffffff" />
+                          ) : (
+                            <Text style={styles.confirmSaveText}>Save</Text>
+                          )}
                   </TouchableOpacity>
                 </View>
               </View>

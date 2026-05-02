@@ -235,6 +235,15 @@ export default function DpMotor() {
     if (digits.length < 4 || digits.length > 9) { setAddLoading(false); Alert.alert('Invalid Number', 'Enter At least 4 - 9 digits for DP Motor.'); return }
     if (!points.trim() || isNaN(Number(points)) || Number(points) <= 0) { setAddLoading(false); Alert.alert('Invalid Points', 'Please enter valid points.'); return }
 
+     const value = Number(points)
+    
+      if (!points.trim() || isNaN(value) || value < 5) {
+        setAddLoading(false);
+        Alert.alert('Invalid Points', 'Minimum amount is 5')
+        return
+      }else{
+        setAddLoading(false);
+      }
     const matches = preMatches
     if (matches.length === 0) { setAddLoading(false); Alert.alert('No Matches', 'No three-digit numbers match the digits you entered.'); safeTimeEnd('DP onAdd'); return }
 
@@ -460,7 +469,11 @@ export default function DpMotor() {
                     <Text style={styles.confirmCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.confirmSaveBtn} onPress={performSubmit} disabled={submitLoading}>
-                    <Text style={styles.confirmSaveText}>Save</Text>
+                     {submitLoading ? (
+                        <ActivityIndicator color="#ffffff" />
+                      ) : (
+                        <Text style={styles.confirmSaveText}>Save</Text>
+                      )}
                   </TouchableOpacity>
                 </View>
               </View>

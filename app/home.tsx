@@ -537,7 +537,10 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
-            <Text style={styles.title}>RM Games </Text>
+            <View style={styles.titleContainer}>
+              <Text style={styles.titlea}>RM Games</Text>
+              <Text style={styles.subTitle}>Play & Win Big!</Text>
+            </View>
 
             {/* Header right actions: notifications, WhatsApp, refresh */}
             <View style={styles.headerRight}>
@@ -604,7 +607,7 @@ export default function HomeScreen() {
 
               <Link href="/sections/add-money" asChild>
                 <TouchableOpacity style={styles.addMoneyBtn}>
-                  <Text style={styles.addMoneyText}>+ Add Money</Text>
+                  <Text style={styles.addMoneyText}>+ ADD MONEY</Text>
                 </TouchableOpacity>
               </Link>
             </View>
@@ -664,10 +667,10 @@ export default function HomeScreen() {
                 activeOpacity={0.85}
               >
                 <MaterialIcons
-                  name={expandedMarkets ? 'unfold-less' : 'unfold-more'}
-                  size={24}
-                  color="#ffffff"
-                />
+                name={expandedMarkets ?  'keyboard-arrow-down':'keyboard-arrow-up'}
+                size={20}
+                color="#ffffff"
+              />
               </TouchableOpacity>
 
               {/* Live badge */}
@@ -1037,11 +1040,11 @@ const styles = StyleSheet.create({
 
   // ── Top section: balance card + quick action buttons ────
   topSection: {
-    marginBottom: 10,
+    marginBottom: 2,
   },
   balanceCard: {
     backgroundColor: C.gold,
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1055,22 +1058,20 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   addMoneyBtn: {
-    backgroundColor: '#000',
+    backgroundColor: '#fff',
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    
+    
     shadowOffset: { width: 0, height: 4 },
-    borderWidth: 1,
   },
   addMoneyText: {
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 14,
-    color: '#fff',
+    color: '#2ed111',
     letterSpacing: 0.3,
   },
   actions: {
@@ -1081,7 +1082,7 @@ const styles = StyleSheet.create({
   actionBtn: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 12,
+    padding: 4,
     borderRadius: 10,
     alignItems: 'center',
   },
@@ -1138,7 +1139,7 @@ const styles = StyleSheet.create({
   },
   swipeArrowBtn: {
     width: 40,
-    height: 40,
+    height: 30,
     borderRadius: 20,
     backgroundColor: '#1e1f3f',
     alignItems: 'center',
@@ -1219,6 +1220,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2d5a',
     borderRadius: 10,
     padding: 10,
+    
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1253,6 +1255,7 @@ const styles = StyleSheet.create({
     borderColor: '#f5c518',
     borderRadius: 10,
     paddingVertical: 10,
+    paddingHorizontal:6,
   },
   resultCol: {
     alignItems: 'center',
@@ -1680,6 +1683,30 @@ balanceCornerTR: {
   backgroundColor: 'rgba(0,0,0,0.15)',
   borderTopRightRadius: 12,
   borderBottomLeftRadius: 10,
+},
+titleContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'flex-start',
+  marginLeft: 12,
+},
+
+titlea: {
+  fontStyle: 'italic',
+  fontWeight: '800',
+  fontSize: 24,
+  color: '#f4f6ff',
+  lineHeight: 26,
+  marginBottom: 3,
+},
+
+subTitle: {
+  fontSize: 13,
+  fontWeight: '400',
+  color: '#f5c518',
+  lineHeight: 14,
+  marginTop: 0,
+  letterSpacing: 0.3,
 },
 
   // ── Unused / legacy (kept for safety) ───────────────────

@@ -216,6 +216,12 @@ export default function SpDpTp() {
       Alert.alert('Invalid Points', 'Please enter valid points.')
       return
     }
+     const value = Number(points)
+    
+      if (!points.trim() || isNaN(value) || value < 5) {
+        Alert.alert('Invalid Points', 'Minimum amount is 5')
+        return
+      }
 
     const targetDigit = Number(singleNumber)
 
@@ -520,7 +526,11 @@ export default function SpDpTp() {
                     <Text style={styles.confirmCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.confirmSaveBtn} onPress={performSubmit} disabled={submitLoading}>
-                    <Text style={styles.confirmSaveText}>Save</Text>
+                     {submitLoading ? (
+                        <ActivityIndicator color="#ffffff" />
+                      ) : (
+                        <Text style={styles.confirmSaveText}>Save</Text>
+                      )}
                   </TouchableOpacity>
                 </View>
               </View>
