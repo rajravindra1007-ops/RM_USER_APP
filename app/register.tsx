@@ -100,7 +100,7 @@ export default function RegisterScreen() {
 
           <View style={styles.card}>
         <Text style={styles.title}>Register</Text>
-        <Text style={styles.subtitle}>Create your Majestic Games account</Text>
+        <Text style={styles.subtitle}>Create your RM Games account</Text>
 
         <TextInput
           placeholder="Full Name"
@@ -259,14 +259,14 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     width: '100%',
-    backgroundColor: '#f0156d',
+    backgroundColor: '#F4C430',
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 16,
   },
   primaryBtnText: {
-    color: '#ffffff',
+    color: '#000',
     fontWeight: '700',
     fontSize: 16,
   },

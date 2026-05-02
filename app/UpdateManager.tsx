@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Modal,
-  View,
-  Text,
-  Button,
-  Platform,
   Alert,
+  Button,
+  Modal,
+  Platform,
   StyleSheet,
+  Text,
+  View,
 } from 'react-native'
 import useColors from '../theme/colors'
 
-import remoteConfig from '@react-native-firebase/remote-config'
 import { getApp } from '@react-native-firebase/app'
+import remoteConfig from '@react-native-firebase/remote-config'
 import * as Application from 'expo-application'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as IntentLauncher from 'expo-intent-launcher'
@@ -156,7 +156,7 @@ export default function UpdateManager() {
         <View style={[styles.card, { backgroundColor: colors.card }] }>
           <Text style={[styles.title, { color: colors.text }]}>Update Required</Text>
           <Text style={[styles.sub, { color: colors.muted }] }>
-            A newer version of the Majestic games is available now Plese Download.
+            A newer version of the RM Games is available now Plese Download.
           </Text>
 
           <View style={{ height: 16 }} />

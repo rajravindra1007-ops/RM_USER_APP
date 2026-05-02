@@ -373,7 +373,7 @@ export default function LoginScreen() {
               <View style={styles.headerAccent} />
               <View>
                 <Text style={styles.welcome}>WELCOME TO</Text>
-                <Text style={styles.appName}>Majestic Games</Text>
+                <Text style={styles.appName}>RM Games</Text>
               </View>
             </View>
 

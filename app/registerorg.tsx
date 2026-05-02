@@ -197,7 +197,7 @@ export default function RegisterScreen() {
 
           <View style={styles.card}>
         <Text style={styles.title}>Register</Text>
-        <Text style={styles.subtitle}>Create your Majestic Games account</Text>
+        <Text style={styles.subtitle}>Create your RM Games account</Text>
 
         <TextInput
           placeholder="Full Name"
