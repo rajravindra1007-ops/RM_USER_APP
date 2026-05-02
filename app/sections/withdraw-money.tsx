@@ -120,7 +120,7 @@ export default function WithdrawMoneySection() {
 
     setSending(true)
     try {
-      const url = `https://backend-9k4j.onrender.com/api/add-money/withdrawal-request`
+      const url = `https://api.rmgames.live/api/add-money/withdrawal-request`
       const idToken = await auth.currentUser?.getIdToken()
       if (!idToken) throw new Error('Not authenticated')
       const payload = { uid, amount: amt }

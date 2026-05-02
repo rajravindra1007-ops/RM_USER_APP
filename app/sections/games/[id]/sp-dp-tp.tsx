@@ -1,22 +1,22 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
+  ActivityIndicator,
   Alert,
   FlatList,
-  ActivityIndicator,
   Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 
-import { SafeAreaView, KeyboardAvoidingView, Platform, InteractionManager } from 'react-native'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
+import { InteractionManager, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native'
 import { auth, db, firebaseWebConfig } from '../../../../firebaseConfig'
-import { MaterialCommunityIcons } from '@expo/vector-icons'
 
 const THEME = {
   bg: '#10112a',
@@ -37,9 +37,9 @@ type SubmitPayload = {
   bets: { number: string; points: number; game: 'open' | 'close' }[]
 }
 
-const USER_BET_BASE_URL = 'https://rmgames.live/api/user-bets/'
-const GAME_CHART_URL = 'https://rmgames.live/api/game-chart/chart'
-const TODAY_MONEY_URL = 'https://rmgames.live/api/game-chart/todaymoney'
+const USER_BET_BASE_URL = 'https://api.rmgames.live/api/user-bets/'
+const GAME_CHART_URL = 'https://api.rmgames.live/api/game-chart/chart'
+const TODAY_MONEY_URL = 'https://api.rmgames.live/api/game-chart/todaymoney'
 
 const SINGLE_PANA_NUMBERS = [
   '127','136','145','190','235','280','370','389','460','479','569','578','128','137','146','236','245','290','380','470','489','560','579','678','129','138','147','156','237','246','345','390','480','570','589','679','120','139','148','157','238','247','256','346','490','580','670','689','130','149','158','167','239','248','257','347','356','590','680','789','140','159','168','230','249','258','267','348','357','456','690','780','123','150','169','178','240','259','268','349','358','367','457','790','124','160','278','179','250','269','340','359','368','458','467','890','125','134','170','189','260','279','350','369','468','378','459','567','126','135','180','234','270','289','360','379','450','469','478','568',

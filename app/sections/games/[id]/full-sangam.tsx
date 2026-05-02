@@ -21,9 +21,9 @@ const THEME = {
   border: '#2a2d5a',
 }
 
-const FULL_SANGAM_URL = 'https://rmgames.live/api/user-bets/fullsangambets'
-const GAME_CHART_URL = 'https://rmgames.live/api/game-chart/chart'
-const TODAY_MONEY_URL = 'https://rmgames.live/api/game-chart/todaymoney'
+const FULL_SANGAM_URL = 'https://api.rmgames.live/api/user-bets/fullsangambets'
+const GAME_CHART_URL = 'https://api.rmgames.live/api/game-chart/chart'
+const TODAY_MONEY_URL = 'https://api.rmgames.live/api/game-chart/todaymoney'
 
 const PANAS = [
   '127','136','145','190','235','280','370','389','460','479','569','578',

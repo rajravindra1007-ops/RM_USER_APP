@@ -29,9 +29,9 @@ type SubmitPayload = {
   bets: { number: string; points: number; game: string }[]
 }
 
-const JODI_DIGIT_URL = 'https://rmgames.live/api/user-bets/jodidigitsbets'
-const GAME_CHART_URL = 'https://rmgames.live/api/game-chart/chart'
-const TODAY_MONEY_URL = 'https://rmgames.live/api/game-chart/todaymoney'
+const JODI_DIGIT_URL = 'https://api.rmgames.live/api/user-bets/jodidigitsbets'
+const GAME_CHART_URL = 'https://api.rmgames.live/api/game-chart/chart'
+const TODAY_MONEY_URL = 'https://api.rmgames.live/api/game-chart/todaymoney'
 
 export default function JodiDigitsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()

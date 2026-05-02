@@ -42,9 +42,9 @@ type SubmitPayload = {
   bets: { number: string; points: number; game: 'open' | 'close' }[]
 }
 
-const SINGLE_PANA_URL = 'https://rmgames.live/api/user-bets/singlepanadigitsbets'
-const GAME_CHART_URL = 'https://rmgames.live/api/game-chart/chart'
-const TODAY_MONEY_URL = 'https://rmgames.live/api/game-chart/todaymoney'
+const SINGLE_PANA_URL = 'https://api.rmgames.live/api/user-bets/singlepanadigitsbets'
+const GAME_CHART_URL = 'https://api.rmgames.live/api/game-chart/chart'
+const TODAY_MONEY_URL = 'https://api.rmgames.live/api/game-chart/todaymoney'
 
 const PANA_NUMBERS = [
   '127', '136', '145', '190', '235', '280', '370', '389', '460', '479', '569', '578',

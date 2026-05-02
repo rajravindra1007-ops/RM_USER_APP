@@ -42,9 +42,9 @@ type SubmitPayload = {
   bets: { number: string; points: number; game: 'open' | 'close' }[]
 }
 
-const TRIPLE_PANA_URL = 'https://rmgames.live/api/user-bets/triplepanadigitsbets'
-const GAME_CHART_URL = 'https://rmgames.live/api/game-chart/chart'
-const TODAY_MONEY_URL = 'https://rmgames.live/api/game-chart/todaymoney'
+const TRIPLE_PANA_URL = 'https://api.rmgames.live/api/user-bets/triplepanadigitsbets'
+const GAME_CHART_URL = 'https://api.rmgames.live/api/game-chart/chart'
+const TODAY_MONEY_URL = 'https://api.rmgames.live/api/game-chart/todaymoney'
 
 const TRIPLE_PANA_NUMBERS = ['000', '111', '222', '333', '444', '555', '666', '777', '888', '999']
 

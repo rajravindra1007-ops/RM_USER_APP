@@ -4,7 +4,7 @@ import { ActivityIndicator, Alert, Image, Linking, Modal, StyleSheet, Text, Text
 import { WebView } from 'react-native-webview'
 import { auth, db } from '../../firebaseConfig'
 
-const CREATE_ORDER_URL = 'https://rmgames.live/api/add-money/create-add-money-order'
+const CREATE_ORDER_URL = 'https://api.rmgames.live/api/add-money/create-add-money-order'
 
 export default function AddMoneySection() {
   const router = useRouter()

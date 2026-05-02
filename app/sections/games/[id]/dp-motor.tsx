@@ -41,9 +41,9 @@ type SubmitPayload = {
   bets: { number: string; points: number; game: 'open' | 'close' }[]
 }
 
-const DP_MOTOR_URL = 'https://rmgames.live/api/user-bets/doublepanadigitsbets'
-const GAME_CHART_URL = 'https://rmgames.live/api/game-chart/chart'
-const TODAY_MONEY_URL = 'https://rmgames.live/api/game-chart/todaymoney'
+const DP_MOTOR_URL = 'https://api.rmgames.live/api/user-bets/doublepanadigitsbets'
+const GAME_CHART_URL = 'https://api.rmgames.live/api/game-chart/chart'
+const TODAY_MONEY_URL = 'https://api.rmgames.live/api/game-chart/todaymoney'
 
 // DP three-digit list (from user request)
 const PANA_NUMBERS = [
