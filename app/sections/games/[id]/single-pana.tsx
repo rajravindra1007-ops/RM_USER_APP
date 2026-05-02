@@ -1,9 +1,9 @@
+import CustomAlert from '@/app/components/CustomAlert'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -13,7 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { auth, db, firebaseWebConfig } from '../../../../firebaseConfig'
@@ -81,6 +81,23 @@ export default function SinglePanaScreen() {
   const [submitting, setSubmitting] = useState(false)
   const [confirmVisible, setConfirmVisible] = useState(false)
 
+  const [alert, setAlert] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        buttons: undefined as any,
+      })
+      
+      
+      const showAlert = (title: string, message: string, buttons?: any) => {
+        setAlert({
+          visible: true,
+          title,
+          message,
+          buttons,
+        })
+      }
+
   useEffect(() => {
     const title = gameName ? `${gameName} - Single Pana` : 'Single Pana'
     navigation.setOptions({
@@ -139,7 +156,7 @@ export default function SinglePanaScreen() {
           if (!canOpen && canClose) setSelected('close')
           if (!canOpen && !canClose && !initialCheckDone) {
             setInitialCheckDone(true)
-            Alert.alert('Not Available', 'Single Pana betting is closed for this game.')
+            showAlert('Not Available', 'Single Pana betting is closed for this game.')
             navigation.goBack()
           }
           if (!initialCheckDone) setInitialCheckDone(true)
@@ -147,7 +164,7 @@ export default function SinglePanaScreen() {
         () => {
           if (!initialCheckDone) {
             setInitialCheckDone(true)
-            Alert.alert('Unavailable', 'Unable to load game details.')
+            showAlert('Unavailable', 'Unable to load game details.')
             navigation.goBack()
           }
         }
@@ -236,32 +253,35 @@ export default function SinglePanaScreen() {
 
   const onAdd = () => {
     if (selected === 'open' && !allowedOpen) {
-      Alert.alert('Not Available', 'Open bids are closed for this game.')
+      showAlert('Not Available', 'Open bids are closed for this game.')
       return
     }
     if (selected === 'close' && !allowedClose) {
-      Alert.alert('Not Available', 'Close bids are closed for this game.')
+      showAlert('Not Available', 'Close bids are closed for this game.')
       return
     }
 
     if (!PANA_NUMBERS.includes(number)) {
-      Alert.alert('Invalid Pana', 'Please select a valid single pana number from the dropdown.')
+      showAlert('Invalid Pana', 'Please select a valid single pana number from the dropdown.')
       return
     }
     if (!points.trim() || isNaN(Number(points)) || Number(points) <= 0) {
-      Alert.alert('Invalid Points', 'Please enter valid points.')
+      showAlert('Invalid Points', 'Please enter valid points.')
       return
     }
 
      const value = Number(points)
     
       if (!points.trim() || isNaN(value) || value < 5) {
-        Alert.alert('Invalid Points', 'Minimum amount is 5')
+        showAlert('Invalid Points', 'Minimum amount is 5')
         return
       }
 
     // Allow adding bids freely; final wallet validation happens on Submit
 
+    
+       
+    
     const newBid: Bid = {
       id: Date.now().toString(),
       number: number,
@@ -281,18 +301,18 @@ export default function SinglePanaScreen() {
   const onPressSubmit = () => {
     if (submitting) return
     if (bids.length === 0) {
-      Alert.alert('No Bids', 'Please add at least one bid before submitting.')
+      showAlert('No Bids', 'Please add at least one bid before submitting.')
       return
     }
     const user = auth.currentUser
     if (!user) {
-      Alert.alert('Not signed in')
+      showAlert('','Not signed in')
       return
     }
 
     const total = bids.reduce((sum, bid) => sum + Number(bid.points), 0)
     if (total > wallet) {
-      Alert.alert('Insufficient Balance', `You need ₹${total} but only have ₹${wallet} in your wallet.`)
+      showAlert('Insufficient Balance', `You need ₹${total} but only have ₹${wallet} in your wallet.`)
       return
     }
 
@@ -328,7 +348,7 @@ export default function SinglePanaScreen() {
       if (!resp.ok) {
         throw new Error(data?.error || 'Submission failed')
       }
-      Alert.alert('Submitted', `Submitted ${bids.length} bet(s).`)
+      showAlert('Submitted', `Submitted ${bids.length} bet(s).`)
       setBids([])
     } finally {
       setSubmitting(false)
@@ -339,7 +359,7 @@ export default function SinglePanaScreen() {
     try {
       await performSubmit()
     } catch (e: any) {
-      Alert.alert('Submit failed', e?.message || String(e))
+      showAlert('Submit failed', e?.message || String(e))
     } finally {
       setConfirmVisible(false)
     }
@@ -539,6 +559,15 @@ export default function SinglePanaScreen() {
           </View>
         </Modal>
       </SafeAreaView>
+       <CustomAlert
+                  visible={alert.visible}
+                  title={alert.title}
+                  message={alert.message}
+                  buttons={alert.buttons}
+                  onDismiss={() =>
+                    setAlert(prev => ({ ...prev, visible: false }))
+                  }
+                />
     </KeyboardAvoidingView>
   )
 }

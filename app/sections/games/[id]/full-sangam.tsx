@@ -1,7 +1,8 @@
+import CustomAlert from '@/app/components/CustomAlert'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { auth, db, firebaseWebConfig } from '../../../../firebaseConfig'
 
 type SubmitPayload = {
@@ -101,6 +102,23 @@ export default function FullSangamScreen() {
   const openRef = useRef<TextInput | null>(null)
   const closeRef = useRef<TextInput | null>(null)
   const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  const [alert, setAlert] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        buttons: undefined as any,
+      })
+      
+      
+      const showAlert = (title: string, message: string, buttons?: any) => {
+        setAlert({
+          visible: true,
+          title,
+          message,
+          buttons,
+        })
+      }
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
@@ -142,7 +160,7 @@ export default function FullSangamScreen() {
     const o = parseTime(openTime)
     if (o == null) return
     if (!clearResult || nowIst() > o) {
-      Alert.alert('Time exceeded', 'Market closed or result not cleared', [{ text: 'OK', onPress: () => navigation.goBack() }])
+      showAlert('Time exceeded', 'Market closed or result not cleared', [{ text: 'OK', onPress: () => navigation.goBack() }])
     }
   }, [openTime, clearResult, navigation])
 
@@ -238,18 +256,18 @@ export default function FullSangamScreen() {
   }
 
   const addEntry = () => {
-    if (!openPana || !PANAS.includes(openPana)) { Alert.alert('Select open pana'); return }
-    if (!closePana || !PANAS.includes(closePana)) { Alert.alert('Select close pana'); return }
+    if (!openPana || !PANAS.includes(openPana)) { showAlert('','Select open pana'); return }
+    if (!closePana || !PANAS.includes(closePana)) { showAlert('','Select close pana'); return }
     
        if (
               !points.trim() ||
               isNaN(Number(points)) ||
               Number(points) < 5
             ) {
-              Alert.alert('Invalid Points', 'Please enter points 5 or greater')
+              showAlert('Invalid Points', 'Please enter points 5 or greater')
               return
             }
-    if (!checkPoints(points)) { Alert.alert('Enter valid points'); return }
+    if (!checkPoints(points)) { showAlert('','Enter valid points'); return }
     const pts = Number(points)
     // Allow adding regardless of current wallet; final check happens on submit
     const entry = { id: Date.now().toString(), number: `${openPana}-${closePana}`, points: pts, game: 'open' }
@@ -259,9 +277,9 @@ export default function FullSangamScreen() {
 
   const handleSubmit = () => {
     if (submitting) return
-    if (!list || list.length === 0) { Alert.alert('No items', 'Please add entries before submitting'); return }
+    if (!list || list.length === 0) { showAlert('No items', 'Please add entries before submitting'); return }
     const total = list.reduce((s, it) => s + Number(it.points), 0)
-    if (total > wallet) { Alert.alert('Insufficient Balance', `You need ₹${total} but only have ₹${wallet} in your wallet.`); return }
+    if (total > wallet) { showAlert('Insufficient Balance', `You need ₹${total} but only have ₹${wallet} in your wallet.`); return }
     setConfirmVisible(true)
   }
 
@@ -270,7 +288,7 @@ export default function FullSangamScreen() {
     setSubmitting(true)
     try {
       const user = auth.currentUser
-      if (!user) { Alert.alert('Not signed in'); return }
+      if (!user) { showAlert('','Not signed in'); return }
       const idToken = await user.getIdToken()
       const payload: SubmitPayload = {
         uid: user.uid,
@@ -291,11 +309,11 @@ export default function FullSangamScreen() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Request failed')
-      Alert.alert('Submitted', `Deducted: ${data.deducted}`)
+      showAlert('Submitted', `Deducted: ${data.deducted}`)
       setList([])
       setConfirmVisible(false)
     } catch (err: any) {
-      Alert.alert('Error', err?.message || String(err))
+      showAlert('Error', err?.message || String(err))
     } finally {
       setSubmitting(false)
     }
@@ -491,6 +509,15 @@ export default function FullSangamScreen() {
           </View>
         </Modal>
       </KeyboardAvoidingView>
+       <CustomAlert
+            visible={alert.visible}
+            title={alert.title}
+            message={alert.message}
+            buttons={alert.buttons}
+            onDismiss={() =>
+              setAlert(prev => ({ ...prev, visible: false }))
+            }
+          />
     </SafeAreaView>
   )
 }

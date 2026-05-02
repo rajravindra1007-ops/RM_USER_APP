@@ -1,7 +1,8 @@
+import CustomAlert from '@/app/components/CustomAlert'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { auth, db } from '../../../../firebaseConfig'
 
@@ -50,6 +51,23 @@ export default function JodiDigitsScreen() {
   const [keyboardHeight, setKeyboardHeight] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [confirmVisible, setConfirmVisible] = useState(false)
+
+   const [alert, setAlert] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    buttons: undefined as any,
+  })
+  
+  
+  const showAlert = (title: string, message: string, buttons?: any) => {
+    setAlert({
+      visible: true,
+      title,
+      message,
+      buttons,
+    })
+  }
 
   useEffect(() => {
     const title = gameName ? `${gameName} - Jodi` : 'Jodi Digits'
@@ -104,7 +122,7 @@ export default function JodiDigitsScreen() {
           setAllowedOpen(canOpen)
           if (!canOpen && !initialCheckDone) {
             setInitialCheckDone(true)
-            Alert.alert('Not Available', 'Jodi betting is not available for this game at this time.')
+            showAlert('Not Available', 'Jodi betting is not available for this game at this time.')
             navigation.goBack()
           }
           if (!initialCheckDone) setInitialCheckDone(true)
@@ -112,7 +130,7 @@ export default function JodiDigitsScreen() {
         () => {
           if (!initialCheckDone) {
             setInitialCheckDone(true)
-            Alert.alert('Unavailable', 'Unable to load game details.')
+            showAlert('Unavailable', 'Unable to load game details.')
             navigation.goBack()
           }
         }
@@ -155,23 +173,23 @@ export default function JodiDigitsScreen() {
 
   const onAdd = () => {
     if (!allowedOpen) {
-      Alert.alert('Not Available', 'Jodi betting is closed for this game.')
+      showAlert('Not Available', 'Jodi betting is closed for this game.')
       return
     }
 
     if (!/^\d{2}$/.test(number)) {
-      Alert.alert('Invalid Jodi', 'Please enter exactly 2 digits (00-99).')
+      showAlert('Invalid Jodi', 'Please enter exactly 2 digits (00-99).')
       return
     }
     if (!points.trim() || isNaN(Number(points)) || Number(points) <= 0) {
-      Alert.alert('Invalid Points', 'Please enter valid points.')
+      showAlert('Invalid Points', 'Please enter valid points.')
       return
     }
 
      const value = Number(points)
     
     if (!points.trim() || isNaN(value) || value < 5) {
-      Alert.alert('Invalid Points', 'Minimum amount is 5')
+      showAlert('Invalid Points', 'Minimum amount is 5')
       return
     }
 
@@ -197,19 +215,19 @@ export default function JodiDigitsScreen() {
   const onPressSubmit = () => {
     if (submitting) return
     if (bids.length === 0) {
-      Alert.alert('No Bids', 'Please add at least one bid before submitting.')
+      showAlert('No Bids', 'Please add at least one bid before submitting.')
       return
     }
     const user = auth.currentUser
     if (!user) {
-      Alert.alert('Not signed in')
+      showAlert('','Not signed in')
       return
     }
 
     // Validate wallet sufficiency before submitting
     const totalRequired = bids.reduce((sum, bid) => sum + Number(bid.points), 0)
     if (totalRequired > wallet) {
-      Alert.alert('Insufficient Balance', `You need ₹${totalRequired} but only have ₹${wallet} in your wallet.`)
+      showAlert('Insufficient Balance', `You need ₹${totalRequired} but only have ₹${wallet} in your wallet.`)
       return
     }
 
@@ -246,7 +264,7 @@ export default function JodiDigitsScreen() {
       if (!resp.ok) {
         throw new Error(data?.error || 'Submission failed')
       }
-      Alert.alert('Submitted', `Submitted ${bids.length} bet(s).`)
+      showAlert('Submitted', `Submitted ${bids.length} bet(s).`)
       setBids([])
     } finally {
       setSubmitting(false)
@@ -257,7 +275,7 @@ export default function JodiDigitsScreen() {
     try {
       await performSubmit()
     } catch (e: any) {
-      Alert.alert('Submit failed', e?.message || String(e))
+      showAlert('Submit failed', e?.message || String(e))
     } finally {
       setConfirmVisible(false)
     }
@@ -422,6 +440,15 @@ export default function JodiDigitsScreen() {
           </View>
         </Modal>
       </SafeAreaView>
+       <CustomAlert
+                  visible={alert.visible}
+                  title={alert.title}
+                  message={alert.message}
+                  buttons={alert.buttons}
+                  onDismiss={() =>
+                    setAlert(prev => ({ ...prev, visible: false }))
+                  }
+                />
     </KeyboardAvoidingView>
   )
 }

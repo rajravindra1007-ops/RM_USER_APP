@@ -1,7 +1,8 @@
+import CustomAlert from '@/app/components/CustomAlert'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { auth, db, firebaseWebConfig } from '../../../../firebaseConfig'
 
 type SubmitPayload = {
@@ -73,6 +74,23 @@ export default function HalfSangamScreen() {
   const [submitting, setSubmitting] = useState(false)
   const [confirmVisible, setConfirmVisible] = useState(false)
 
+  const [alert, setAlert] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        buttons: undefined as any,
+      })
+      
+      
+      const showAlert = (title: string, message: string, buttons?: any) => {
+        setAlert({
+          visible: true,
+          title,
+          message,
+          buttons,
+        })
+      }
+
   useEffect(() => {
     const title = gameName ? `${gameName} - Half Sangam` : 'Half Sangam'
     navigation.setOptions({
@@ -130,7 +148,7 @@ export default function HalfSangamScreen() {
     const o = parseTime(openTime)
     if (o == null) return
     if (!clearResult || nowIst() > o) {
-      Alert.alert('Time exceeded', 'Market closed or result not cleared', [{ text: 'OK', onPress: () => navigation.goBack() }])
+      showAlert('Time exceeded', 'Market closed or result not cleared', [{ text: 'OK', onPress: () => navigation.goBack() }])
     }
   }, [openTime, clearResult, navigation])
 
@@ -239,16 +257,16 @@ export default function HalfSangamScreen() {
   }
 
   const addOpen = () => {
-    if (!checkDigit(openDigit)) { Alert.alert('Invalid open digit'); return }
-    if (!openPana || !PANAS.includes(openPana)) { Alert.alert('Select valid close pana'); return }
-    if (!checkPoints(openPoints)) { Alert.alert('Invalid points'); return }
+    if (!checkDigit(openDigit)) { showAlert('','Invalid open digit'); return }
+    if (!openPana || !PANAS.includes(openPana)) { showAlert('','Select valid close pana'); return }
+    if (!checkPoints(openPoints)) { showAlert('','Invalid points'); return }
 
             if (
           !openPoints.trim() ||
           isNaN(Number(openPoints)) ||
           Number(openPoints) < 5
         ) {
-          Alert.alert('Invalid Points', 'Please enter points 5 or greater')
+          showAlert('Invalid Points', 'Please enter points 5 or greater')
           return
         }
     
@@ -260,9 +278,9 @@ export default function HalfSangamScreen() {
   }
 
   const addClose = () => {
-    if (!checkDigit(closeDigit)) { Alert.alert('Invalid close digit'); return }
-    if (!closePana || !PANAS.includes(closePana)) { Alert.alert('Select valid open pana'); return }
-    if (!checkPoints(closePoints)) { Alert.alert('Invalid points'); return }
+    if (!checkDigit(closeDigit)) { showAlert('','Invalid close digit'); return }
+    if (!closePana || !PANAS.includes(closePana)) { showAlert('','Select valid open pana'); return }
+    if (!checkPoints(closePoints)) { showAlert('','Invalid points'); return }
     const pts = Number(closePoints)
     // Allow adding regardless of current wallet; final check happens on submit
     const entry = { id: Date.now().toString(), number: `${closeDigit}-${closePana}`, points: pts, game: 'close' }
@@ -272,9 +290,9 @@ export default function HalfSangamScreen() {
 
   const handleSubmit = () => {
     if (submitting) return
-    if (!list || list.length === 0) { Alert.alert('No items', 'Please add at least one entry before submitting.'); return }
+    if (!list || list.length === 0) { showAlert('No items', 'Please add at least one entry before submitting.'); return }
     const total = list.reduce((s, it) => s + Number(it.points), 0)
-    if (total > wallet) { Alert.alert('Insufficient Balance', `You need ₹${total} but only have ₹${wallet} in your wallet.`); return }
+    if (total > wallet) { showAlert('Insufficient Balance', `You need ₹${total} but only have ₹${wallet} in your wallet.`); return }
     setConfirmVisible(true)
   }
 
@@ -283,7 +301,7 @@ export default function HalfSangamScreen() {
     setSubmitting(true)
     try {
       const user = auth.currentUser
-      if (!user) { Alert.alert('Not signed in'); return }
+      if (!user) { showAlert('','Not signed in'); return }
       const idToken = await user.getIdToken()
       const payload: SubmitPayload = {
         uid: user.uid,
@@ -304,11 +322,11 @@ export default function HalfSangamScreen() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Request failed')
-      Alert.alert('Submitted', `Deducted: ${data.deducted}`)
+      showAlert('Submitted', `Deducted: ${data.deducted}`)
       setList([])
       setConfirmVisible(false)
     } catch (err: any) {
-      Alert.alert('Error', err?.message || String(err))
+      showAlert('Error', err?.message || String(err))
     } finally {
       setSubmitting(false)
     }
@@ -576,6 +594,15 @@ export default function HalfSangamScreen() {
           </View>
         </Modal>
       </KeyboardAvoidingView>
+       <CustomAlert
+            visible={alert.visible}
+            title={alert.title}
+            message={alert.message}
+            buttons={alert.buttons}
+            onDismiss={() =>
+              setAlert(prev => ({ ...prev, visible: false }))
+            }
+          />
     </SafeAreaView>
   )
 }

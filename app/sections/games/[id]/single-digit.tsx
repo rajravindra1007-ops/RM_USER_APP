@@ -1,7 +1,8 @@
+import CustomAlert from '@/app/components/CustomAlert'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { auth, db } from '../../../../firebaseConfig'
 
@@ -55,6 +56,23 @@ export default function SingleDigitScreen() {
   const [keyboardHeight, setKeyboardHeight] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [confirmVisible, setConfirmVisible] = useState(false)
+
+  const [alert, setAlert] = useState({
+  visible: false,
+  title: '',
+  message: '',
+  buttons: undefined as any,
+})
+
+
+const showAlert = (title: string, message: string, buttons?: any) => {
+  setAlert({
+    visible: true,
+    title,
+    message,
+    buttons,
+  })
+}
 
    const [status, setStatus] = React.useState<string>('')
   const [loading, setLoading] = React.useState(false)
@@ -144,7 +162,7 @@ export default function SingleDigitScreen() {
           if (!canOpen && canClose) setSelected('close')
           if (!canOpen && !canClose && !initialCheckDone) {
             setInitialCheckDone(true)
-            Alert.alert('Time is up', 'This market is closed.')
+            showAlert('Time is up', 'This market is closed.')
             navigation.goBack()
           }
           if (!initialCheckDone) setInitialCheckDone(true)
@@ -152,7 +170,7 @@ export default function SingleDigitScreen() {
         () => {
           if (!initialCheckDone) {
             setInitialCheckDone(true)
-            Alert.alert('Unavailable', 'Unable to load game timings.')
+            showAlert('Unavailable', 'Unable to load game timings.')
             navigation.goBack()
           }
         }
@@ -204,27 +222,31 @@ export default function SingleDigitScreen() {
 
   const onAdd = () => {
     if (selected === 'open' && !allowedOpen) {
-      Alert.alert('Not Available', 'Open bids are closed for this game.')
+       showAlert('Not Available', 'Open bids are closed for this game.')
       return
     }
     if (selected === 'close' && !allowedClose) {
-      Alert.alert('Not Available', 'Close bids are closed for this game.')
+      showAlert('Not Available', 'Close bids are closed for this game.')
       return
     }
 
     // Validate single digit (0-9)
     if (!/^[0-9]$/.test(number)) {
-      Alert.alert('Invalid Number', 'Please enter a single digit (0-9)')
+      showAlert('Invalid Points', 'Please enter a single digit (0-9)')
       return
     }
     if (!points.trim() || isNaN(Number(points)) || Number(points) <= 0) {
-      Alert.alert('Invalid Points', 'Please enter valid points')
+      showAlert('Invalid Points', 'Please enter valid points')
       return
     }
       const value = Number(points)
 
       if (!points.trim() || isNaN(value) || value < 5) {
-        Alert.alert('Invalid Points', 'Minimum amount is 5')
+       
+       if (!points.trim() || isNaN(value) || value < 5) {
+          showAlert('Invalid Points', 'Minimum amount is 5')
+          return
+        }
         return
       }
 
@@ -253,18 +275,18 @@ export default function SingleDigitScreen() {
   const onPressSubmit = () => {
     if (submitting) return
     if (bids.length === 0) {
-      Alert.alert('No Bids', 'Please add at least one bid before submitting')
+      showAlert('No Bids', 'Please add at least one bid before submitting')
       return
     }
     const user = auth.currentUser
     if (!user) {
-      Alert.alert('Not signed in')
+      showAlert('Login', 'Not signed in')
       return
     }
 
     const totalRequired = bids.reduce((sum, bid) => sum + Number(bid.points), 0)
     if (totalRequired > wallet) {
-      Alert.alert('Insufficient Balance', `You need ${totalRequired} points but only have ${wallet} in your wallet.`)
+      showAlert('Insufficient Balance', 'You need ${totalRequired} points but only have ${wallet} in your wallet.')
       return
     }
 
@@ -276,14 +298,14 @@ export default function SingleDigitScreen() {
     if (submitting) return
     const user = auth.currentUser
     if (!user) {
-      Alert.alert('Not signed in')
+      showAlert('','Not signed in')
       setConfirmVisible(false)
       return
     }
 
     const totalRequired = bids.reduce((sum, bid) => sum + Number(bid.points), 0)
     if (totalRequired > wallet) {
-      Alert.alert('Insufficient Balance', `You need ${totalRequired} points but only have ${wallet} in your wallet.`)
+      showAlert('Insufficient Balance', `You need ${totalRequired} points but only have ${wallet} in your wallet.`)
       setConfirmVisible(false)
       return
     }
@@ -313,10 +335,10 @@ export default function SingleDigitScreen() {
       if (!resp.ok) {
         throw new Error(data?.error || 'Submission failed')
       }
-      Alert.alert('Submitted', `Submitted ${bids.length} bet(s).`)
+      showAlert('Submitted', `Submitted ${bids.length} bet(s).`)
       setBids([])
     } catch (e: any) {
-      Alert.alert('Submit failed', e?.message || String(e))
+      showAlert('Submit failed', e?.message || String(e))
     } finally {
       setSubmitting(false)
       setConfirmVisible(false)
@@ -494,6 +516,15 @@ export default function SingleDigitScreen() {
             </ScrollView>
           </View>
         </Modal>
+        <CustomAlert
+            visible={alert.visible}
+            title={alert.title}
+            message={alert.message}
+            buttons={alert.buttons}
+            onDismiss={() =>
+              setAlert(prev => ({ ...prev, visible: false }))
+            }
+          />
       </SafeAreaView>
     </KeyboardAvoidingView>
   )

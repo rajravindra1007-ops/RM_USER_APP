@@ -1,9 +1,9 @@
+import CustomAlert from '@/app/components/CustomAlert'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -15,7 +15,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native'
 import { auth, db, firebaseWebConfig } from '../../../../firebaseConfig'
 
@@ -89,6 +89,23 @@ export default function SpMotor() {
   const [allowedOpen, setAllowedOpen] = useState(false)
   const [allowedClose, setAllowedClose] = useState(false)
   const [initialCheckDone, setInitialCheckDone] = useState(false)
+
+  const [alert, setAlert] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        buttons: undefined as any,
+      })
+      
+      
+      const showAlert = (title: string, message: string, buttons?: any) => {
+        setAlert({
+          visible: true,
+          title,
+          message,
+          buttons,
+        })
+      }
 
   useEffect(() => {
     const title = gameName ? `${gameName} - SP Motor` : 'SP Motor'
@@ -174,7 +191,7 @@ export default function SpMotor() {
           if (!canOpen && canClose) setSelected('close')
           if (!canOpen && !canClose && !initialCheckDone) {
             setInitialCheckDone(true)
-            Alert.alert('Not Available', 'SP Motor betting is closed for this game.')
+            showAlert('Not Available', 'SP Motor betting is closed for this game.')
             navigation.goBack()
           }
           if (!initialCheckDone) setInitialCheckDone(true)
@@ -182,7 +199,7 @@ export default function SpMotor() {
         () => {
           if (!initialCheckDone) {
             setInitialCheckDone(true)
-            Alert.alert('Unavailable', 'Unable to load game details.')
+            showAlert('Unavailable', 'Unable to load game details.')
             navigation.goBack()
           }
         }
@@ -238,12 +255,12 @@ export default function SpMotor() {
     await new Promise((r) => setTimeout(r, 0))
     if (selected === 'open' && !allowedOpen) {
       setAddLoading(false)
-      Alert.alert('Not Available', 'Open bets are closed for this game.')
+      showAlert('Not Available', 'Open bets are closed for this game.')
       return
     }
     if (selected === 'close' && !allowedClose) {
       setAddLoading(false)
-      Alert.alert('Not Available', 'Close bets are closed for this game.')
+      showAlert('Not Available', 'Close bets are closed for this game.')
       return
     }
 
@@ -251,7 +268,7 @@ export default function SpMotor() {
         
       if (!points.trim() || isNaN(value) || value < 5) {
         setAddLoading(false)
-        Alert.alert('Invalid Points', 'Minimum amount is 5')
+        showAlert('Invalid Points', 'Minimum amount is 5')
         return
       }else{
         setAddLoading(false)
@@ -259,12 +276,12 @@ export default function SpMotor() {
 
     if (digits.length < 4 || digits.length > 9) {
       setAddLoading(false)
-      Alert.alert('Invalid Number', 'Enter At least 4 - 9 digits for SP Motor.')
+      showAlert('Invalid Number', 'Enter At least 4 - 9 digits for SP Motor.')
       return
     }
     if (!points.trim() || isNaN(Number(points)) || Number(points) <= 0) {
       setAddLoading(false)
-      Alert.alert('Invalid Points', 'Please enter valid points.')
+      showAlert('Invalid Points', 'Please enter valid points.')
       return
     }
 
@@ -274,7 +291,7 @@ export default function SpMotor() {
     const matches = preMatches
     if (matches.length === 0) {
       setAddLoading(false)
-      Alert.alert('No Matches', 'No three-digit numbers match the digits you entered.')
+      showAlert('No Matches', 'No three-digit numbers match the digits you entered.')
       return
     }
 
@@ -284,7 +301,7 @@ export default function SpMotor() {
     const totalRequired = totalAdded + matches.length * pts
     // if (totalRequired > wallet) {
     //   setAddLoading(false)
-    //   Alert.alert('Insufficient Balance', `You need ₹${totalRequired} but only have ₹${wallet} in your wallet.`)
+    //   showAlert('Insufficient Balance', `You need ₹${totalRequired} but only have ₹${wallet} in your wallet.`)
     //   return
     // }
     // add matches as individual bids, avoid duplicates using existingKeysRef
@@ -302,7 +319,7 @@ export default function SpMotor() {
     }
     if (newBids.length === 0) {
       setAddLoading(false)
-      Alert.alert('Duplicate', 'All matching numbers already added.')
+      showAlert('Duplicate', 'All matching numbers already added.')
       safeTimeEnd('SP onAdd')
       return
     }
@@ -327,10 +344,10 @@ export default function SpMotor() {
   const onPressSubmit = () => {
     // quick client-side validation before showing modal
     const total = bids.reduce((s, b) => s + Number(b.points), 0)
-    if (total === 0) { Alert.alert('No Bets', 'Please add some bets before submitting.'); return }
-    if (total > wallet) { Alert.alert('Insufficient Balance', 'You do not have enough balance to place these bets.'); return }
+    if (total === 0) { showAlert('No Bets', 'Please add some bets before submitting.'); return }
+    if (total > wallet) { showAlert('Insufficient Balance', 'You do not have enough balance to place these bets.'); return }
     const user = auth.currentUser
-    if (!user) { Alert.alert('Not Signed In', 'Please sign in to place bets.'); return }
+    if (!user) { showAlert('Not Signed In', 'Please sign in to place bets.'); return }
 
     setConfirmVisible(true)
   }
@@ -346,7 +363,7 @@ export default function SpMotor() {
     }
 
     const user = auth.currentUser
-    if (!user) { Alert.alert('Not Signed In', 'Please sign in to place bets.'); setConfirmVisible(false); return }
+    if (!user) { showAlert('Not Signed In', 'Please sign in to place bets.'); setConfirmVisible(false); return }
     setSubmitLoading(true)
     try {
       const token = await user.getIdToken()
@@ -367,9 +384,9 @@ export default function SpMotor() {
       existingKeysRef.current = new Set()
       totalPointsRef.current = 0
       setBids([])
-      Alert.alert('Success', `Placed ${payload.bets.length} SP bets. Deducted ₹${data.deducted ?? total}.`)
+      showAlert('Success', `Placed ${payload.bets.length} SP bets. Deducted ₹${data.deducted ?? total}.`)
     } catch (err: any) {
-      Alert.alert('Submit Failed', err?.message || String(err))
+      showAlert('Submit Failed', err?.message || String(err))
     } finally {
       setSubmitLoading(false)
       setConfirmVisible(false)
@@ -560,6 +577,15 @@ export default function SpMotor() {
           </View>
         </Modal>
       </KeyboardAvoidingView>
+       <CustomAlert
+            visible={alert.visible}
+            title={alert.title}
+            message={alert.message}
+            buttons={alert.buttons}
+            onDismiss={() =>
+              setAlert(prev => ({ ...prev, visible: false }))
+            }
+          />
     </SafeAreaView>
   )
 }

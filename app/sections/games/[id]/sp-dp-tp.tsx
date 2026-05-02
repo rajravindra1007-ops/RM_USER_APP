@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Modal,
   ScrollView,
@@ -9,9 +8,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native'
 
+import CustomAlert from '@/app/components/CustomAlert'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
@@ -80,6 +80,23 @@ export default function SpDpTp() {
   const numberInputRef = useRef<TextInput | null>(null)
   const pointsRef = useRef<TextInput | null>(null)
   // removed manual keyboard height tracking; submit button will stay fixed
+
+  const [alert, setAlert] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        buttons: undefined as any,
+      })
+      
+      
+      const showAlert = (title: string, message: string, buttons?: any) => {
+        setAlert({
+          visible: true,
+          title,
+          message,
+          buttons,
+        })
+      }
 
   useEffect(() => {
     const title = gameName ? `${gameName} - SP DP TP` : 'SP DP TP'
@@ -205,21 +222,21 @@ export default function SpDpTp() {
 
   const onAdd = () => {
     if (!useSP && !useDP && !useTP) {
-      Alert.alert('Select Type', 'Please select at least one of SP / DP / TP.')
+      showAlert('Select Type', 'Please select at least one of SP / DP / TP.')
       return
     }
     if (!/^[0-9]$/.test(singleNumber)) {
-      Alert.alert('Invalid Number', 'Enter a single digit (0-9).')
+      showAlert('Invalid Number', 'Enter a single digit (0-9).')
       return
     }
     if (!points.trim() || isNaN(Number(points)) || Number(points) <= 0) {
-      Alert.alert('Invalid Points', 'Please enter valid points.')
+      showAlert('Invalid Points', 'Please enter valid points.')
       return
     }
      const value = Number(points)
     
       if (!points.trim() || isNaN(value) || value < 5) {
-        Alert.alert('Invalid Points', 'Minimum amount is 5')
+        showAlert('Invalid Points', 'Minimum amount is 5')
         return
       }
 
@@ -260,7 +277,7 @@ export default function SpDpTp() {
     }
 
     if (newToAdd.length === 0 && toUpdate.length === 0) {
-      Alert.alert('No Matches', 'No numbers match the selected criteria.')
+      showAlert('No Matches', 'No numbers match the selected criteria.')
       return
     }
 
@@ -306,17 +323,17 @@ export default function SpDpTp() {
 
   const onPressSubmit = () => {
     const total = totalPointsRef.current
-    if (total === 0) { Alert.alert('No Bets', 'Please add some bets before submitting.'); return }
-    if (total > wallet) { Alert.alert('Insufficient Balance', `You need ₹${total} but only have ₹${wallet} in your wallet.`); return }
+    if (total === 0) { showAlert('No Bets', 'Please add some bets before submitting.'); return }
+    if (total > wallet) { showAlert('Insufficient Balance', `You need ₹${total} but only have ₹${wallet} in your wallet.`); return }
     const user = auth.currentUser
-    if (!user) { Alert.alert('Not signed in'); return }
+    if (!user) { showAlert('','Not signed in'); return }
     setConfirmVisible(true)
   }
 
   const performSubmit = async () => {
     const total = totalPointsRef.current
     const user = auth.currentUser
-    if (!user) { Alert.alert('Not signed in'); setConfirmVisible(false); return }
+    if (!user) { showAlert('','Not signed in'); setConfirmVisible(false); return }
     setSubmitLoading(true)
     try {
       const idToken = await user.getIdToken()
@@ -348,13 +365,13 @@ export default function SpDpTp() {
         const json = await res.json().catch(() => null)
         if (!res.ok) throw new Error(json?.error || `Failed ${t}`)
       }
-      Alert.alert('Submitted', `Submitted ${bidsRef.current.length} bet(s).`)
+      showAlert('Submitted', `Submitted ${bidsRef.current.length} bet(s).`)
       setBids([])
       bidsRef.current = []
       totalPointsRef.current = 0
       existingKeysRef.current = new Set()
     } catch (err: any) {
-      Alert.alert('Submit failed', err?.message || String(err))
+      showAlert('Submit failed', err?.message || String(err))
     } finally {
       setSubmitLoading(false)
       setConfirmVisible(false)
@@ -538,6 +555,15 @@ export default function SpDpTp() {
           </View>
         </Modal>
       </KeyboardAvoidingView>
+       <CustomAlert
+            visible={alert.visible}
+            title={alert.title}
+            message={alert.message}
+            buttons={alert.buttons}
+            onDismiss={() =>
+              setAlert(prev => ({ ...prev, visible: false }))
+            }
+          />
     </SafeAreaView>
   )
 }
