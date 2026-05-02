@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { View, Text, Animated } from 'react-native'
+import { Animated, Text, View } from 'react-native'
 
 export default function NoticeBoardSection() {
   const fadeAnim = useRef(new Animated.Value(0)).current
@@ -55,7 +55,7 @@ export default function NoticeBoardSection() {
             marginBottom: 8,
           }}
         >
-          Majestic Games
+          Rm Games
         </Text>
         <Text
           style={{

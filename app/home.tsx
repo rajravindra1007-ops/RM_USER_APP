@@ -599,7 +599,7 @@ export default function HomeScreen() {
 
               <View>
                 <Text style={styles.balanceLabel}>Available Balance</Text>
-                <Text style={styles.balanceAmount}>₹ {wallet}.00</Text>
+                <Text style={styles.balanceAmount}>₹ {wallet}</Text>
               </View>
 
               <Link href="/sections/add-money" asChild>
@@ -686,7 +686,9 @@ export default function HomeScreen() {
               scrollEnabled={true}
               contentContainerStyle={{
                 // Extra bottom padding so last card clears the bottom nav
-                paddingBottom: expandedMarkets ? 140 : 30,
+                // paddingBottom: expandedMarkets ? 16 : 30,
+                paddingBottom: expandedMarkets ? 16 : 30,
+                flexGrow: 1,
               }}
               refreshing={refreshing}
               onRefresh={onRefresh}
@@ -1003,6 +1005,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   title: {
+    fontStyle:'italic',
     flex: 1,
     textAlign: 'center',
     fontWeight: '700',
@@ -1052,7 +1055,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   addMoneyBtn: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#000',
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 14,
@@ -1062,14 +1065,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
   },
   addMoneyText: {
     fontWeight: '800',
     fontSize: 14,
-    color: '#111827',
+    color: '#fff',
     letterSpacing: 0.3,
   },
   actions: {

@@ -47,7 +47,7 @@ export default function BottomNav({ active }: BottomNavProps) {
             style={styles.activeTab}
             onPress={() => router.push(tab.route as any)}
           >
-            <MaterialIcons name={tab.icon} size={18} color="#ffffff" />
+            <MaterialIcons name={tab.icon} size={18} color="#000" />
             <Text style={styles.activeTabText}>{tab.label}</Text>
           </TouchableOpacity>
         ) : (
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   activeTabText: {
-    color: '#ffffff',
+    color: '#000',
     fontWeight: '700',
     fontSize: 14,
   },
