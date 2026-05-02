@@ -24,7 +24,7 @@ import CustomAlert from './components/CustomAlert'
 export default function LoginScreen() {
   const router = useRouter()
 
-  const [phone, setPhone] = useState('+91')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [deviceId, setDeviceId] = useState('')
   const [loggingIn, setLoggingIn] = useState(false)
@@ -71,11 +71,11 @@ const handlePhoneChange = (text: string) => {
   }
 
   // Limit total length (+91 + 10 digits = 13 chars)
-  if (cleaned.startsWith('+')) {
-    cleaned = cleaned.slice(0, 13)
-  } else {
-    cleaned = cleaned.slice(0, 12)
-  }
+  // if (cleaned.startsWith('+')) {
+  //   cleaned = cleaned.slice(0, 13)
+  // } else {
+  //   cleaned = cleaned.slice(0, 12)
+  // }
 
   setPhone(cleaned)
 }
@@ -83,7 +83,15 @@ const handlePhoneChange = (text: string) => {
   const login = async () => {
     if (loggingIn) return
 
-    if (phone.length !== 13) {
+    if (phone.length !== 10) {
+      showAlert(
+        'Invalid Number',
+        'Please enter a valid mobile number.'
+      )
+      return
+    }
+
+     if (phone.length < 10) {
       showAlert(
         'Invalid Number',
         'Please enter a valid mobile number.'
@@ -198,8 +206,8 @@ const handlePhoneChange = (text: string) => {
               value={phone}
               onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
-              maxLength={13}
-              placeholder="+91XXXXXXXXXX"
+              maxLength={10}
+              placeholder="XXXXXXXXXX"
               placeholderTextColor="#777"
               style={styles.input}
               autoComplete="off"

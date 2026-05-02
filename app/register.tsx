@@ -11,7 +11,7 @@ import { auth, db, phoneToEmail } from '../firebaseConfig'
 export default function RegisterScreen() {
   const router = useRouter()
   const [name, setName] = useState('')
-  const [phone, setPhone] = useState('+91')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [deviceId, setDeviceId] = useState<string>('')
   const [registering, setRegistering] = useState(false)
@@ -34,7 +34,7 @@ export default function RegisterScreen() {
       Alert.alert('Invalid name', 'Please enter your full name')
       return
     }
-    if (!phone || phone.trim().length < 6) {
+    if (!phone || phone.trim().length < 10) {
       Alert.alert('Invalid phone', 'Please enter a valid phone number')
       return
     }
@@ -110,10 +110,10 @@ export default function RegisterScreen() {
           style={styles.input}
         />
         <TextInput
-          placeholder="Phone (+91...)"
+          placeholder="Phone"
           placeholderTextColor="#9ca3af"
           value={phone}
-          maxLength={13}
+          maxLength={10}
           onChangeText={setPhone}
           keyboardType="number-pad"
           style={styles.input}
