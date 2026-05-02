@@ -30,9 +30,9 @@ type SubmitPayload = {
   bets: { number: string; points: number; game: 'open' | 'close' }[]
 }
 
-const SINGLE_DIGIT_URL = 'https://rmgames.live/api/user-bets/singledigitbets'
-const GAME_CHART_URL = 'https://rmgames.live/api/game-chart/chart'
-const TODAY_MONEY_URL = 'https://rmgames.live/api/game-chart/todaymoney'
+const SINGLE_DIGIT_URL = 'https://api.rmgames.live/api/user-bets/singledigitbets'
+const GAME_CHART_URL = 'https://api.rmgames.live/api/game-chart/chart'
+const TODAY_MONEY_URL = 'https://api.rmgames.live/api/game-chart/todaymoney'
 
 export default function SingleDigitScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -55,6 +55,25 @@ export default function SingleDigitScreen() {
   const [keyboardHeight, setKeyboardHeight] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [confirmVisible, setConfirmVisible] = useState(false)
+
+   const [status, setStatus] = React.useState<string>('')
+  const [loading, setLoading] = React.useState(false)
+  
+  const checkHealth = async () => {
+    setLoading(true)
+    setStatus('')
+  
+    try {
+      const res = await fetch('https://api.rmgames.live/health')
+      const data = await res.json()
+  
+      setStatus(data?.status === 'ok' ? 'Server is Healthy ✅' : 'Server Issue ❌')
+    } catch (err) {
+      setStatus('Server Not Reachable ❌')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const title = gameName ? `${gameName} - Single Digit` : 'Single Digit'
