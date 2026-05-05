@@ -236,7 +236,8 @@ export default function DoublePanaScreen() {
       next = DOUBLE_PANA_NUMBERS.filter((n) => n.startsWith(text))
     }
     setFilteredNumbers(next)
-    setDropdownOpen(text.length > 0 && next.length > 0)
+    // setDropdownOpen(text.length > 0 && next.length > 0)
+    setDropdownOpen(text.length > 0 && text.length < 3 && next.length > 0)
   }
 
   const selectNumber = (num: string) => {

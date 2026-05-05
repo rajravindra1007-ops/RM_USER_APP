@@ -29,8 +29,8 @@ const THEME = {
   border: '#2a2d5a',
 }
 // Safe console timers: some release JS engines may not have console.time/timeEnd
-const safeTime = (label: string) => { try { if (typeof console?.time === 'function') console.time(label) } catch (_) {} }
-const safeTimeEnd = (label: string) => { try { if (typeof console?.timeEnd === 'function') console.timeEnd(label) } catch (_) {} }
+const safeTime = (label: string) => { try { if (typeof console?.time === 'function') console.time(label) } catch (_) { } }
+const safeTimeEnd = (label: string) => { try { if (typeof console?.timeEnd === 'function') console.timeEnd(label) } catch (_) { } }
 type Bid = { id: string; number: string; points: string; game: 'open' | 'close' }
 
 type SubmitPayload = {
@@ -57,7 +57,7 @@ const PANA_NUMBERS = [
   '116', '224', '233', '288', '440', '477', '558', '800', '990',
   '117', '144', '199', '225', '388', '559', '577', '667', '900',
   '118', '226', '244', '299', '334', '488', '550', '668', '677',
-  
+
 ]
 
 // Precompute bitmasks for unique digits of each pana for very fast matching
@@ -96,21 +96,21 @@ export default function DpMotor() {
   const [initialCheckDone, setInitialCheckDone] = useState(false)
 
   const [alert, setAlert] = useState({
-        visible: false,
-        title: '',
-        message: '',
-        buttons: undefined as any,
-      })
-      
-      
-      const showAlert = (title: string, message: string, buttons?: any) => {
-        setAlert({
-          visible: true,
-          title,
-          message,
-          buttons,
-        })
-      }
+    visible: false,
+    title: '',
+    message: '',
+    buttons: undefined as any,
+  })
+
+
+  const showAlert = (title: string, message: string, buttons?: any) => {
+    setAlert({
+      visible: true,
+      title,
+      message,
+      buttons,
+    })
+  }
 
   useEffect(() => {
     const title = gameName ? `${gameName} - DP Motor` : 'DP Motor'
@@ -210,20 +210,20 @@ export default function DpMotor() {
   useEffect(() => {
     if (!initialCheckDone) return
     let abort = false
-    ;(async () => {
-      try {
-        safeTime('DP warmup')
-        const url = `https://us-central1-${firebaseWebConfig.projectId}.cloudfunctions.net/doublepanadigitsbets`
-        const body = JSON.stringify({ uid: auth.currentUser ? auth.currentUser.uid : null, code: 'DP', gameId: String(id), bets: [] })
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 4000)
-        await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: controller.signal }).catch(() => {})
-        clearTimeout(timeout)
-        if (!abort) safeTimeEnd('DP warmup')
-      } catch (err) {
-        try { safeTimeEnd('DP warmup') } catch (_) {}
-      }
-    })()
+      ; (async () => {
+        try {
+          safeTime('DP warmup')
+          const url = `https://us-central1-${firebaseWebConfig.projectId}.cloudfunctions.net/doublepanadigitsbets`
+          const body = JSON.stringify({ uid: auth.currentUser ? auth.currentUser.uid : null, code: 'DP', gameId: String(id), bets: [] })
+          const controller = new AbortController()
+          const timeout = setTimeout(() => controller.abort(), 4000)
+          await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: controller.signal }).catch(() => { })
+          clearTimeout(timeout)
+          if (!abort) safeTimeEnd('DP warmup')
+        } catch (err) {
+          try { safeTimeEnd('DP warmup') } catch (_) { }
+        }
+      })()
     return () => { abort = true }
   }, [initialCheckDone, id])
 
@@ -252,15 +252,15 @@ export default function DpMotor() {
     if (digits.length < 4 || digits.length > 9) { setAddLoading(false); showAlert('Invalid Number', 'Enter At least 4 - 9 digits for DP Motor.'); return }
     if (!points.trim() || isNaN(Number(points)) || Number(points) <= 0) { setAddLoading(false); showAlert('Invalid Points', 'Please enter valid points.'); return }
 
-     const value = Number(points)
-    
-      if (!points.trim() || isNaN(value) || value < 5) {
-        setAddLoading(false);
-        showAlert('Invalid Points', 'Minimum amount is 5')
-        return
-      }else{
-        setAddLoading(false);
-      }
+    const value = Number(points)
+
+    if (!points.trim() || isNaN(value) || value < 5) {
+      setAddLoading(false);
+      showAlert('Invalid Points', 'Minimum amount is 5')
+      return
+    } else {
+      setAddLoading(false);
+    }
     const matches = preMatches
     if (matches.length === 0) { setAddLoading(false); showAlert('No Matches', 'No three-digit numbers match the digits you entered.'); safeTimeEnd('DP onAdd'); return }
 
@@ -286,6 +286,9 @@ export default function DpMotor() {
     setBids([...bidsRef.current])
     setDigits('')
     setPoints('')
+    setTimeout(() => {
+      numberInputRef.current?.focus()
+    }, 100)
     setAddLoading(false)
     safeTimeEnd('DP onAdd')
   }
@@ -486,11 +489,11 @@ export default function DpMotor() {
                     <Text style={styles.confirmCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.confirmSaveBtn} onPress={performSubmit} disabled={submitLoading}>
-                     {submitLoading ? (
-                        <ActivityIndicator color="#ffffff" />
-                      ) : (
-                        <Text style={styles.confirmSaveText}>Save</Text>
-                      )}
+                    {submitLoading ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : (
+                      <Text style={styles.confirmSaveText}>Save</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -498,15 +501,15 @@ export default function DpMotor() {
           </View>
         </Modal>
       </KeyboardAvoidingView>
-       <CustomAlert
-            visible={alert.visible}
-            title={alert.title}
-            message={alert.message}
-            buttons={alert.buttons}
-            onDismiss={() =>
-              setAlert(prev => ({ ...prev, visible: false }))
-            }
-          />
+      <CustomAlert
+        visible={alert.visible}
+        title={alert.title}
+        message={alert.message}
+        buttons={alert.buttons}
+        onDismiss={() =>
+          setAlert(prev => ({ ...prev, visible: false }))
+        }
+      />
     </SafeAreaView>
   )
 }
@@ -552,7 +555,7 @@ const styles = StyleSheet.create({
   deleteBtnText: { color: '#ffffff', fontWeight: '600', fontSize: 13 },
   submitWrapper: { position: 'absolute', left: 32, right: 32, alignItems: 'center' },
   submitBtnFixed: { backgroundColor: THEME.gold, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 18, alignItems: 'center', width: '100%' },
-submitBtnText: { color: 'Black', fontWeight: '700', fontSize: 16 },
+  submitBtnText: { color: 'Black', fontWeight: '700', fontSize: 16 },
   confirmOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
@@ -641,7 +644,7 @@ submitBtnText: { color: 'Black', fontWeight: '700', fontSize: 16 },
 
 function triggerChartRequest(payload: SubmitPayload, token: string | null) {
   // Silent fire-and-forget sync so DP Motor submit flow stays responsive
-  ;(async () => {
+  ; (async () => {
     try {
       const resp = await fetch(GAME_CHART_URL, {
         method: 'POST',
@@ -663,31 +666,31 @@ function triggerChartRequest(payload: SubmitPayload, token: string | null) {
 
 function triggerTodayMoneyRequest(totalAmount: number, payload: SubmitPayload, token: string | null) {
   if (!Number.isFinite(totalAmount) || totalAmount <= 0) return
-  ;(async () => {
-    try {
-      const body = {
-        uid: payload.uid,
-        code: payload.code,
-        gameId: payload.gameId,
-        gameName: payload.gameName,
-        totalAmount,
+    ; (async () => {
+      try {
+        const body = {
+          uid: payload.uid,
+          code: payload.code,
+          gameId: payload.gameId,
+          gameName: payload.gameName,
+          totalAmount,
+        }
+        const resp = await fetch(TODAY_MONEY_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(body),
+        })
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => null)
+          throw new Error(data?.error || 'Today money update failed')
+        }
+      } catch (err) {
+        console.debug('DP Motor today money sync failed', err)
       }
-      const resp = await fetch(TODAY_MONEY_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(body),
-      })
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => null)
-        throw new Error(data?.error || 'Today money update failed')
-      }
-    } catch (err) {
-      console.debug('DP Motor today money sync failed', err)
-    }
-  })()
+    })()
 }
 
 // Helpers: parse 12h and check if the provided time is in future or not crossed

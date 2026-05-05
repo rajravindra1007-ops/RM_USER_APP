@@ -29,8 +29,8 @@ const THEME = {
   border: '#2a2d5a',
 }
 // Safe console timers: some release JS engines may not have console.time/timeEnd
-const safeTime = (label: string) => { try { if (typeof console?.time === 'function') console.time(label) } catch (_) {} }
-const safeTimeEnd = (label: string) => { try { if (typeof console?.timeEnd === 'function') console.timeEnd(label) } catch (_) {} }
+const safeTime = (label: string) => { try { if (typeof console?.time === 'function') console.time(label) } catch (_) { } }
+const safeTimeEnd = (label: string) => { try { if (typeof console?.timeEnd === 'function') console.timeEnd(label) } catch (_) { } }
 
 type Bid = { id: string; number: string; points: string; game: 'open' | 'close' }
 
@@ -91,21 +91,21 @@ export default function SpMotor() {
   const [initialCheckDone, setInitialCheckDone] = useState(false)
 
   const [alert, setAlert] = useState({
-        visible: false,
-        title: '',
-        message: '',
-        buttons: undefined as any,
-      })
-      
-      
-      const showAlert = (title: string, message: string, buttons?: any) => {
-        setAlert({
-          visible: true,
-          title,
-          message,
-          buttons,
-        })
-      }
+    visible: false,
+    title: '',
+    message: '',
+    buttons: undefined as any,
+  })
+
+
+  const showAlert = (title: string, message: string, buttons?: any) => {
+    setAlert({
+      visible: true,
+      title,
+      message,
+      buttons,
+    })
+  }
 
   useEffect(() => {
     const title = gameName ? `${gameName} - SP Motor` : 'SP Motor'
@@ -211,22 +211,22 @@ export default function SpMotor() {
   useEffect(() => {
     if (!initialCheckDone) return
     let abort = false
-    ;(async () => {
-      try {
-        safeTime('SP warmup')
-        const url = `https://us-central1-${firebaseWebConfig.projectId}.cloudfunctions.net/singlepanadigitsbets`
-        // Minimal payload; function may require auth but even a rejected request warms container
-        const body = JSON.stringify({ uid: auth.currentUser ? auth.currentUser.uid : null, code: 'SP', gameId: String(id), bets: [] })
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 4000)
-        await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: controller.signal }).catch(() => {})
-        clearTimeout(timeout)
-        if (!abort) safeTimeEnd('SP warmup')
-      } catch (err) {
-        // ignore warmup errors
-        try { safeTimeEnd('SP warmup') } catch (_) {}
-      }
-    })()
+      ; (async () => {
+        try {
+          safeTime('SP warmup')
+          const url = `https://us-central1-${firebaseWebConfig.projectId}.cloudfunctions.net/singlepanadigitsbets`
+          // Minimal payload; function may require auth but even a rejected request warms container
+          const body = JSON.stringify({ uid: auth.currentUser ? auth.currentUser.uid : null, code: 'SP', gameId: String(id), bets: [] })
+          const controller = new AbortController()
+          const timeout = setTimeout(() => controller.abort(), 4000)
+          await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: controller.signal }).catch(() => { })
+          clearTimeout(timeout)
+          if (!abort) safeTimeEnd('SP warmup')
+        } catch (err) {
+          // ignore warmup errors
+          try { safeTimeEnd('SP warmup') } catch (_) { }
+        }
+      })()
     return () => { abort = true }
   }, [initialCheckDone, id])
 
@@ -264,15 +264,15 @@ export default function SpMotor() {
       return
     }
 
-     const value = Number(points)
-        
-      if (!points.trim() || isNaN(value) || value < 5) {
-        setAddLoading(false)
-        showAlert('Invalid Points', 'Minimum amount is 5')
-        return
-      }else{
-        setAddLoading(false)
-      }
+    const value = Number(points)
+
+    if (!points.trim() || isNaN(value) || value < 5) {
+      setAddLoading(false)
+      showAlert('Invalid Points', 'Minimum amount is 5')
+      return
+    } else {
+      setAddLoading(false)
+    }
 
     if (digits.length < 4 || digits.length > 9) {
       setAddLoading(false)
@@ -285,7 +285,7 @@ export default function SpMotor() {
       return
     }
 
-     
+
 
     // use precomputed matches (computed while typing) to speed up Add
     const matches = preMatches
@@ -328,6 +328,9 @@ export default function SpMotor() {
     setBids([...bidsRef.current])
     setDigits('')
     setPoints('')
+    setTimeout(() => {
+      numberInputRef.current?.focus()
+    }, 100)
     setAddLoading(false)
     safeTimeEnd('SP onAdd')
   }
@@ -565,11 +568,11 @@ export default function SpMotor() {
                     <Text style={styles.confirmCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.confirmSaveBtn} onPress={performSubmit} disabled={submitLoading}>
-                     {submitLoading ? (
-                            <ActivityIndicator color="#ffffff" />
-                          ) : (
-                            <Text style={styles.confirmSaveText}>Save</Text>
-                          )}
+                    {submitLoading ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : (
+                      <Text style={styles.confirmSaveText}>Save</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -577,22 +580,22 @@ export default function SpMotor() {
           </View>
         </Modal>
       </KeyboardAvoidingView>
-       <CustomAlert
-            visible={alert.visible}
-            title={alert.title}
-            message={alert.message}
-            buttons={alert.buttons}
-            onDismiss={() =>
-              setAlert(prev => ({ ...prev, visible: false }))
-            }
-          />
+      <CustomAlert
+        visible={alert.visible}
+        title={alert.title}
+        message={alert.message}
+        buttons={alert.buttons}
+        onDismiss={() =>
+          setAlert(prev => ({ ...prev, visible: false }))
+        }
+      />
     </SafeAreaView>
   )
 }
 
 function triggerChartRequest(payload: SubmitPayload, token: string | null) {
   // Fire-and-forget chart sync so bet submit flow stays responsive
-  ;(async () => {
+  ; (async () => {
     try {
       const res = await fetch(GAME_CHART_URL, {
         method: 'POST',
@@ -614,31 +617,31 @@ function triggerChartRequest(payload: SubmitPayload, token: string | null) {
 
 function triggerTodayMoneyRequest(totalAmount: number, payload: SubmitPayload, token: string | null) {
   if (!Number.isFinite(totalAmount) || totalAmount <= 0) return
-  ;(async () => {
-    try {
-      const body = {
-        uid: payload.uid,
-        code: payload.code,
-        gameId: payload.gameId,
-        gameName: payload.gameName,
-        totalAmount,
+    ; (async () => {
+      try {
+        const body = {
+          uid: payload.uid,
+          code: payload.code,
+          gameId: payload.gameId,
+          gameName: payload.gameName,
+          totalAmount,
+        }
+        const res = await fetch(TODAY_MONEY_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: 'Bearer ' + token } : {}),
+          },
+          body: JSON.stringify(body),
+        })
+        if (!res.ok) {
+          const data = await res.json().catch(() => null)
+          throw new Error(data?.error || 'Today money update failed')
+        }
+      } catch (err: any) {
+        console.warn('Today money update failed:', err?.message || err)
       }
-      const res = await fetch(TODAY_MONEY_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: 'Bearer ' + token } : {}),
-        },
-        body: JSON.stringify(body),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => null)
-        throw new Error(data?.error || 'Today money update failed')
-      }
-    } catch (err: any) {
-      console.warn('Today money update failed:', err?.message || err)
-    }
-  })()
+    })()
 }
 
 function Radio({ label, checked, onPress }: { label: string; checked: boolean; onPress: () => void }) {
@@ -757,7 +760,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingVertical: 10,
     alignItems: 'center',
-   backgroundColor: THEME.gold,
+    backgroundColor: THEME.gold,
   },
   confirmCancelText: {
     color: '#1d4ed8',

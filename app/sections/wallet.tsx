@@ -20,6 +20,7 @@ const COLORS = {
   bg: "#11132d",
   card: "#ffb400",
   yellow: "#facc15",
+  gold:'#f5c518',
   subText: "#8b90b8",
   cardDark: "#1c1e3a",
   green: "#22c55e",
@@ -219,7 +220,7 @@ export default function WalletScreen() {
             style={styles.addBtn}
             onPress={() => router.push("/sections/add-money")}
           >
-            <MaterialIcons name="add" size={18} color="#fff" />
+            <MaterialIcons name="add" size={18} color="#2ed111" />
             <Text style={styles.addText}>Add Money</Text>
           </TouchableOpacity>
         </View>
@@ -419,13 +420,13 @@ const styles = StyleSheet.create({
   },
 
   balanceCard: {
-    backgroundColor: COLORS.card,
-    padding: 18,
+    backgroundColor: COLORS.gold,
+    padding: 12,
     borderRadius: 18,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 14,
+    marginBottom: 12,
   },
 
   balanceLabel: {
@@ -444,15 +445,15 @@ const styles = StyleSheet.create({
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#000",
+    backgroundColor: "#fff",
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 12,
     gap: 5,
   },
 
   addText: {
-    color: "#fff",
+    color: "#2ed111",
     fontWeight: "800",
     fontSize: 13,
   },

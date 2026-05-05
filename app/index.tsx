@@ -55,35 +55,97 @@ export default function LoginScreen() {
     })
   }
 
-const handlePhoneChange = (text: string) => {
-  // Allow empty field
-  if (text === '') {
-    setPhone('')
-    return
+  const handlePhoneChange = (text: string) => {
+    // Allow empty field
+    if (text === '') {
+      setPhone('')
+      return
+    }
+
+    // Remove invalid characters, but preserve leading +
+    let cleaned = text.replace(/[^\d+]/g, '')
+
+    // Ensure only one + at the beginning
+    if (cleaned.includes('+')) {
+      cleaned = '+' + cleaned.replace(/\+/g, '')
+    }
+
+    // Limit total length (+91 + 10 digits = 13 chars)
+    // if (cleaned.startsWith('+')) {
+    //   cleaned = cleaned.slice(0, 13)
+    // } else {
+    //   cleaned = cleaned.slice(0, 12)
+    // }
+
+    setPhone(cleaned)
   }
 
-  // Remove invalid characters, but preserve leading +
-  let cleaned = text.replace(/[^\d+]/g, '')
+  // const login = async () => {
+  //   if (loggingIn) return
 
-  // Ensure only one + at the beginning
-  if (cleaned.includes('+')) {
-    cleaned = '+' + cleaned.replace(/\+/g, '')
-  }
+  //   if (phone.length !== 10) {
+  //     showAlert(
+  //       'Invalid Number',
+  //       'Please enter a valid mobile number.'
+  //     )
+  //     return
+  //   }
 
-  // Limit total length (+91 + 10 digits = 13 chars)
-  // if (cleaned.startsWith('+')) {
-  //   cleaned = cleaned.slice(0, 13)
-  // } else {
-  //   cleaned = cleaned.slice(0, 12)
+  //    if (phone.length < 10) {
+  //     showAlert(
+  //       'Invalid Number',
+  //       'Please enter a valid mobile number.'
+  //     )
+  //     return
+  //   }
+
+  //   if (!password.trim()) {
+  //     showAlert(
+  //       'Missing Password',
+  //       'Please enter your password.'
+  //     )
+  //     return
+  //   }
+
+  //   try {
+  //     setLoggingIn(true)
+
+  //     const email = phoneToEmail(phone)
+
+  //     const cred = await auth.signInWithEmailAndPassword(
+  //       email,
+  //       password.trim()
+  //     )
+
+  //     const uid = cred.user.uid
+
+  //     await Promise.all([
+  //       db.collection('users').doc(uid).set(
+  //         { deviceId },
+  //         { merge: true }
+  //       ),
+  //       AsyncStorage.setItem('savedPhone', phone),
+  //       AsyncStorage.setItem('savedPassword', password),
+  //     ])
+
+  //     router.replace('/home')
+  //   } catch (e: any) {
+  //     showAlert(
+  //       'Login Failed',
+  //       e?.message || 'Something went wrong. Please try again.'
+  //     )
+  //   } finally {
+  //     setLoggingIn(false)
+  //   }
   // }
 
-  setPhone(cleaned)
-}
-
   const login = async () => {
-    if (loggingIn) return
-
     if (phone.length !== 10) {
+      showAlert('Invalid Mobile Number', 'Please enter a valid 10-digit mobile number.')
+      return
+    }
+
+    if (phone.length < 10) {
       showAlert(
         'Invalid Number',
         'Please enter a valid mobile number.'
@@ -91,49 +153,36 @@ const handlePhoneChange = (text: string) => {
       return
     }
 
-     if (phone.length < 10) {
-      showAlert(
-        'Invalid Number',
-        'Please enter a valid mobile number.'
-      )
-      return
-    }
+
+
 
     if (!password.trim()) {
-      showAlert(
-        'Missing Password',
-        'Please enter your password.'
-      )
+      showAlert('Password Required', 'Please enter your password.')
       return
     }
 
+
+
+    setLoggingIn(true)
+
     try {
-      setLoggingIn(true)
+      const fullPhone = `${phone}`
+      const email = phoneToEmail(fullPhone)
 
-      const email = phoneToEmail(phone)
-
-      const cred = await auth.signInWithEmailAndPassword(
-        email,
-        password.trim()
-      )
-
+      const cred = await auth.signInWithEmailAndPassword(email, password)
       const uid = cred.user.uid
 
-      await Promise.all([
-        db.collection('users').doc(uid).set(
-          { deviceId },
-          { merge: true }
-        ),
-        AsyncStorage.setItem('savedPhone', phone),
-        AsyncStorage.setItem('savedPassword', password),
-      ])
+      await db.collection('users').doc(uid).set(
+        { deviceId },
+        { merge: true }
+      )
+
+      await AsyncStorage.setItem('savedPhone', phone)
+      await AsyncStorage.setItem('savedPassword', password)
 
       router.replace('/home')
     } catch (e: any) {
-      showAlert(
-        'Login Failed',
-        e?.message || 'Something went wrong. Please try again.'
-      )
+      showAlert('Login Failed', e?.message || 'Something went wrong.')
     } finally {
       setLoggingIn(false)
     }
@@ -207,7 +256,7 @@ const handlePhoneChange = (text: string) => {
               onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
               maxLength={10}
-              placeholder="XXXXXXXXXX"
+              placeholder="Enter 10 digit mobile number"
               placeholderTextColor="#777"
               style={styles.input}
               autoComplete="off"
@@ -265,25 +314,40 @@ const handlePhoneChange = (text: string) => {
               <ActivityIndicator color="#000000" />
             ) : (
               <Text style={styles.loginText}>
-                LOGIN
+                LOGIN...
               </Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.registerBtn}
-            onPress={() =>
-              router.push('/register')
-            }
+            style={{
+              marginTop: 22,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1.5,
+              borderColor: '#F4C430',
+              paddingVertical: 12,
+              borderRadius: 12,
+            }}
+            onPress={() => router.push('/register')}
             activeOpacity={0.8}
           >
-            <Text style={styles.registerText}>
-              New user?{' '}
-              <Text
-                style={styles.registerHighlight}
-              >
-                Register
-              </Text>
+            <MaterialIcons
+              name="person-add"
+              size={18}
+              color="#F4C430"
+              style={{ marginRight: 6 }}
+            />
+            <Text
+              style={{
+                color: '#F4C430',
+                fontSize: 15,
+                fontWeight: '900',
+                letterSpacing: 0.6,
+              }}
+            >
+              Register New User
             </Text>
           </TouchableOpacity>
         </ScrollView>

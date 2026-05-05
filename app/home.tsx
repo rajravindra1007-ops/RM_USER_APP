@@ -111,6 +111,7 @@ export default function HomeScreen() {
 
   // ── Drawer animation state ──────────────────────────────
   const [drawerX] = useState(() => new Animated.Value(-drawerWidth));
+  const whatsappAnim = useRef(new Animated.Value(1)).current;
   const [open, setOpen] = useState(false);
 
   // ── Wallet / games state ────────────────────────────────
@@ -192,6 +193,38 @@ export default function HomeScreen() {
   // ── Marquee notice state ────────────────────────────────
   const [noticeText, setNoticeText] = useState<string>('Welcome to RM Games! Play responsibly. Withdraw anytime. Good luck! 🎯');
   const marqueeX = useRef(new Animated.Value(SCREEN_WIDTH)).current;
+
+
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(whatsappAnim, {
+          toValue: 1.3,   // zoom in
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(whatsappAnim, {
+          toValue: 1,     // zoom out
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(whatsappAnim, {
+          toValue: 0.6,   // slight fade (blink feel)
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(whatsappAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    loop.start();
+    return () => loop.stop();
+  }, []);
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -554,7 +587,9 @@ export default function HomeScreen() {
               {/* WhatsApp / message options */}
               <TouchableOpacity onPress={() => setMessageOptionsVisible(true)}>
                 <View style={styles.iconCircle}>
-                  <FontAwesome name="whatsapp" size={22} color="#25D366" />
+                  <Animated.View style={{ transform: [{ scale: whatsappAnim }] }}>
+                    <FontAwesome name="whatsapp" size={28} color="#25D366" />
+                  </Animated.View>
                 </View>
               </TouchableOpacity>
 
@@ -598,7 +633,7 @@ export default function HomeScreen() {
 
             {/* Balance card */}
             <View style={styles.balanceCard}>
-              
+
 
               <View>
                 <Text style={styles.balanceLabel}>Available Balance</Text>
@@ -639,6 +674,7 @@ export default function HomeScreen() {
               styles.bottomSection,
               // When expanded, use absolute positioning to cover the full content area
               expandedMarkets && styles.bottomSectionExpanded,
+
             ]}
           >
             {/* Error banner (shown if games fetch fails) */}
@@ -667,10 +703,10 @@ export default function HomeScreen() {
                 activeOpacity={0.85}
               >
                 <MaterialIcons
-                name={expandedMarkets ?  'keyboard-arrow-down':'keyboard-arrow-up'}
-                size={20}
-                color="#ffffff"
-              />
+                  name={expandedMarkets ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
+                  size={20}
+                  color="#ffffff"
+                />
               </TouchableOpacity>
 
               {/* Live badge */}
@@ -1008,7 +1044,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   title: {
-    fontStyle:'italic',
+    fontStyle: 'italic',
     flex: 1,
     textAlign: 'center',
     fontWeight: '700',
@@ -1064,8 +1100,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    
-    
+
+
     shadowOffset: { width: 0, height: 4 },
   },
   addMoneyText: {
@@ -1099,7 +1135,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
     padding: 10,
-    minHeight: SCREEN_HEIGHT * 0.52,
+    minHeight: SCREEN_HEIGHT * 0.62,
   },
   // Expanded state — covers full content area (top section hidden behind)
   bottomSectionExpanded: {
@@ -1113,6 +1149,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     elevation: 10,
+    minHeight: SCREEN_HEIGHT * 0.82,
   },
 
   // ── Section header row ──────────────────────────────────
@@ -1220,7 +1257,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2d5a',
     borderRadius: 10,
     padding: 10,
-    
+
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1255,7 +1292,7 @@ const styles = StyleSheet.create({
     borderColor: '#f5c518',
     borderRadius: 10,
     paddingVertical: 10,
-    paddingHorizontal:6,
+    paddingHorizontal: 6,
   },
   resultCol: {
     alignItems: 'center',
@@ -1640,74 +1677,74 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   // ── Notice board (marquee) ──────────────────────────────
-noticeBoard: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  backgroundColor: '#0b1f4c',
-  borderRadius: 8,
-  paddingVertical: 7,
-  paddingHorizontal: 10,
-  marginBottom: 8,
-  borderWidth: 1,
-  borderColor: '#facc1540',
-  overflow: 'hidden',
-},
-noticeTrack: {
-  flex: 1,
-  overflow: 'hidden',
-},
-noticeText: {
-  color: '#facc15',
-  fontSize: 13,
-  fontWeight: '600',
-  width: SCREEN_WIDTH * 2,
-},
+  noticeBoard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0b1f4c',
+    borderRadius: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#facc1540',
+    overflow: 'hidden',
+  },
+  noticeTrack: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  noticeText: {
+    color: '#facc15',
+    fontSize: 13,
+    fontWeight: '600',
+    width: SCREEN_WIDTH * 2,
+  },
 
-// ── Balance card corner decorations ────────────────────
-balanceCornerTL: {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: 22,
-  height: 22,
-  backgroundColor: 'rgba(0,0,0,0.15)',
-  borderTopLeftRadius: 12,
-  borderBottomRightRadius: 10,
-},
-balanceCornerTR: {
-  position: 'absolute',
-  top: 0,
-  right: 0,
-  width: 22,
-  height: 22,
-  backgroundColor: 'rgba(0,0,0,0.15)',
-  borderTopRightRadius: 12,
-  borderBottomLeftRadius: 10,
-},
-titleContainer: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'flex-start',
-  marginLeft: 12,
-},
+  // ── Balance card corner decorations ────────────────────
+  balanceCornerTL: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 22,
+    height: 22,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    borderTopLeftRadius: 12,
+    borderBottomRightRadius: 10,
+  },
+  balanceCornerTR: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 22,
+    height: 22,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    borderTopRightRadius: 12,
+    borderBottomLeftRadius: 10,
+  },
+  titleContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    marginLeft: 12,
+  },
 
-titlea: {
-  fontStyle: 'italic',
-  fontWeight: '800',
-  fontSize: 24,
-  color: '#f4f6ff',
-  lineHeight: 26,
-  marginBottom: 3,
-},
+  titlea: {
+    fontStyle: 'italic',
+    fontWeight: '800',
+    fontSize: 24,
+    color: '#f4f6ff',
+    lineHeight: 26,
+    marginBottom: 3,
+  },
 
-subTitle: {
-  fontSize: 13,
-  fontWeight: '400',
-  color: '#f5c518',
-  lineHeight: 14,
-  marginTop: 0,
-  letterSpacing: 0.3,
-},
+  subTitle: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#f5c518',
+    lineHeight: 14,
+    marginTop: 0,
+    letterSpacing: 0.3,
+  },
 
   // ── Unused / legacy (kept for safety) ───────────────────
   // bottomSectionExpanded was previously absolute from top:180
