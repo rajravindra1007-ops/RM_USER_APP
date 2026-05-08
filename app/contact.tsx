@@ -95,10 +95,7 @@ export default function ContactScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
-        <TouchableOpacity style={styles.iconWrap} onPress={onCall} activeOpacity={0.8}>
-          <MaterialIcons name="call" size={48} color="#fff" />
-          <Text style={styles.iconLabel}>Call</Text>
-        </TouchableOpacity>
+      
 
         <TouchableOpacity style={styles.iconWrap} onPress={onWhatsApp} activeOpacity={0.8}>
           <FontAwesome name="whatsapp" size={48} color="#25D366" />

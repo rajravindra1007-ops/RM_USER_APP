@@ -14,7 +14,7 @@ export default function ChartListScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      title: 'Game charts',
+      title: 'Rate charts',
       headerLeft: () => null,
       headerTitleAlign: 'left',
       headerStyle: { backgroundColor: '#0b1f4c', elevation: 8, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 6 } },

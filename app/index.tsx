@@ -45,7 +45,27 @@ export default function LoginScreen() {
       toValue: 1,
       useNativeDriver: true,
     }).start()
+
+    loadSavedLogin()
   }, [])
+
+  // LOAD SAVED LOGIN DETAILS
+  const loadSavedLogin = async () => {
+    try {
+      const savedPhone = await AsyncStorage.getItem('savedPhone')
+      const savedPassword = await AsyncStorage.getItem('savedPassword')
+
+      if (savedPhone) {
+        setPhone(savedPhone)
+      }
+
+      if (savedPassword) {
+        setPassword(savedPassword)
+      }
+    } catch (error) {
+      console.log('Error loading saved login:', error)
+    }
+  }
 
   const showAlert = (title: string, message: string) => {
     setAlert({
@@ -56,120 +76,56 @@ export default function LoginScreen() {
   }
 
   const handlePhoneChange = (text: string) => {
-    // Allow empty field
     if (text === '') {
       setPhone('')
       return
     }
 
-    // Remove invalid characters, but preserve leading +
     let cleaned = text.replace(/[^\d+]/g, '')
 
-    // Ensure only one + at the beginning
     if (cleaned.includes('+')) {
       cleaned = '+' + cleaned.replace(/\+/g, '')
     }
 
-    // Limit total length (+91 + 10 digits = 13 chars)
-    // if (cleaned.startsWith('+')) {
-    //   cleaned = cleaned.slice(0, 13)
-    // } else {
-    //   cleaned = cleaned.slice(0, 12)
-    // }
-
     setPhone(cleaned)
   }
 
-  // const login = async () => {
-  //   if (loggingIn) return
-
-  //   if (phone.length !== 10) {
-  //     showAlert(
-  //       'Invalid Number',
-  //       'Please enter a valid mobile number.'
-  //     )
-  //     return
-  //   }
-
-  //    if (phone.length < 10) {
-  //     showAlert(
-  //       'Invalid Number',
-  //       'Please enter a valid mobile number.'
-  //     )
-  //     return
-  //   }
-
-  //   if (!password.trim()) {
-  //     showAlert(
-  //       'Missing Password',
-  //       'Please enter your password.'
-  //     )
-  //     return
-  //   }
-
-  //   try {
-  //     setLoggingIn(true)
-
-  //     const email = phoneToEmail(phone)
-
-  //     const cred = await auth.signInWithEmailAndPassword(
-  //       email,
-  //       password.trim()
-  //     )
-
-  //     const uid = cred.user.uid
-
-  //     await Promise.all([
-  //       db.collection('users').doc(uid).set(
-  //         { deviceId },
-  //         { merge: true }
-  //       ),
-  //       AsyncStorage.setItem('savedPhone', phone),
-  //       AsyncStorage.setItem('savedPassword', password),
-  //     ])
-
-  //     router.replace('/home')
-  //   } catch (e: any) {
-  //     showAlert(
-  //       'Login Failed',
-  //       e?.message || 'Something went wrong. Please try again.'
-  //     )
-  //   } finally {
-  //     setLoggingIn(false)
-  //   }
-  // }
-
   const login = async () => {
     if (phone.length !== 10) {
-      showAlert('Invalid Mobile Number', 'Please enter a valid 10-digit mobile number.')
-      return
-    }
-
-    if (phone.length < 10) {
       showAlert(
-        'Invalid Number',
-        'Please enter a valid mobile number.'
+        'Invalid Mobile Number',
+        'Please enter a valid 10-digit mobile number.'
       )
       return
     }
 
-
-
-
     if (!password.trim()) {
-      showAlert('Password Required', 'Please enter your password.')
+      showAlert(
+        'Password Required',
+        'Please enter your password.'
+      )
       return
     }
 
-
-
     setLoggingIn(true)
+
+    Animated.loop(
+      Animated.timing(loaderTranslate, {
+        toValue: 1,
+        duration: 900,
+        useNativeDriver: true,
+      })
+    ).start()
 
     try {
       const fullPhone = `${phone}`
       const email = phoneToEmail(fullPhone)
 
-      const cred = await auth.signInWithEmailAndPassword(email, password)
+      const cred = await auth.signInWithEmailAndPassword(
+        email,
+        password
+      )
+
       const uid = cred.user.uid
 
       await db.collection('users').doc(uid).set(
@@ -177,16 +133,22 @@ export default function LoginScreen() {
         { merge: true }
       )
 
+      // SAVE LOGIN DETAILS
       await AsyncStorage.setItem('savedPhone', phone)
       await AsyncStorage.setItem('savedPassword', password)
 
       router.replace('/home')
     } catch (e: any) {
-      showAlert('Login Failed', e?.message || 'Something went wrong.')
+      showAlert(
+        'Login Failed',
+        e?.message || 'Something went wrong.'
+      )
     } finally {
       setLoggingIn(false)
     }
   }
+
+  const loaderTranslate = useRef(new Animated.Value(0)).current
 
   return (
     <SafeAreaView style={styles.container}>
@@ -305,6 +267,14 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity
+            onPress={() => router.push('/contact')}
+          >
+            <Text style={styles.forgot}>
+              Forgot Password?
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={styles.loginBtn}
             onPress={login}
             disabled={loggingIn}
@@ -339,6 +309,7 @@ export default function LoginScreen() {
               color="#F4C430"
               style={{ marginRight: 6 }}
             />
+
             <Text
               style={{
                 color: '#F4C430',
@@ -428,6 +399,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
+  forgot: {
+    color: '#fff',
+    textAlign: 'right',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6,
+    marginTop: 1,
+  },
+
   loginBtn: {
     backgroundColor: '#F4C430',
     height: 56,
@@ -442,21 +422,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
     letterSpacing: 0.5,
-  },
-
-  registerBtn: {
-    marginTop: 22,
-    alignItems: 'center',
-  },
-
-  registerText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
-  registerHighlight: {
-    color: '#F4C430',
-    fontWeight: '900',
   },
 })

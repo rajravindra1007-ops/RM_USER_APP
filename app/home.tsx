@@ -70,7 +70,7 @@ const sections = [
   { title: 'Money Added', route: '/sections/money-added' as const },
   { title: 'Withdraw Requests', route: '/sections/withdraw-requests' as const },
   { title: 'Notice Board', route: '/sections/notice-board' as const },
-  { title: 'Game Chart', route: '/sections/rate-chart' as const },
+  { title: 'Rate Chart', route: '/sections/rate-chart' as const },
   { title: 'Share App', route: '/sections/share-app' as const },
   { title: 'How to Play', route: '/sections/how-to-play' as const },
   { title: 'Log Out', route: '/sections/logout' as const },
@@ -92,7 +92,7 @@ const getSectionIcon = (title: string): React.ComponentProps<typeof MaterialIcon
     case 'Withdraw Requests': return 'assignment-return';
     case 'Notice Board': return 'notifications';
     case 'Rate Chart': return 'show-chart';
-    case 'Game Chart': return 'show-chart';
+    case 'Rate Chart': return 'show-chart';
     case 'How to Play': return 'help-outline';
     case 'Share App': return 'share';
     case 'Log Out': return 'logout';

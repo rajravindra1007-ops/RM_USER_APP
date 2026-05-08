@@ -134,7 +134,7 @@ export default function RateChartSection() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }] }>
       <View style={styles.header}>
         <Image source={require('../../assets/images/icon.png')} style={styles.headerIcon} />
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Game Chart</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Rate Chart</Text>
       </View>
 
       <FlatList

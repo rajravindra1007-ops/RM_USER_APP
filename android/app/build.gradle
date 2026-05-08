@@ -49,40 +49,37 @@ android {
         applicationId 'com.moneshsutar.userAppRM'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "5.2.0"
+        versionCode 11
+        versionName "5.8.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
 
     signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
+        release {
+        storeFile file('my-release-key.keystore')
+        storePassword 'root123'
+        keyAlias 'my-key-alias'
+        keyPassword 'root123'
+    }
     }
 
     buildTypes {
-        debug {
-            signingConfig signingConfigs.debug
-        }
+       
 
-        release {
-            // Keeping existing keystore config untouched
-            signingConfig signingConfigs.debug
-
-            def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
-            shrinkResources enableShrinkResources.toBoolean()
-
-            minifyEnabled enableMinifyInReleaseBuilds
-
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-
-            def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
-            crunchPngs enablePngCrunchInRelease.toBoolean()
-        }
+       release {
+        signingConfig signingConfigs.release
+        def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
+        debuggable false
+        shrinkResources true
+        minifyEnabled true
+        proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
+        crunchPngs false
+        ndk {
+                debugSymbolLevel = "none"
+            }
+    }
     }
 
     // ✅ Added ARM64-only APK generation
