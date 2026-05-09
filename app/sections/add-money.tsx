@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Animated,
+  Easing,
   Image,
   Linking,
   Modal,
@@ -20,88 +21,45 @@ import CustomAlert from '../components/CustomAlert'
 
 const CREATE_ORDER_URL = 'https://api.rmgames.live/api/add-money/create-add-money-order'
 
-// ─── Google Pay SVG logo (official brand colours) ─────────────────────────────
 function GPayLogo() {
   return (
     <Svg width={58} height={24} viewBox="0 0 58 24">
-      {/* "G" lettermark */}
-      <Path
-        d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0Z"
-        fill="#fff"
-      />
-      <Path
-        d="M12 4.8A7.2 7.2 0 1 0 12 19.2 7.2 7.2 0 0 0 12 4.8Z"
-        fill="#fff"
-      />
-      {/* G shape */}
-      <Path
-        d="M19.6 12.2c0-.5 0-.9-.1-1.3H12v2.5h4.3a3.7 3.7 0 0 1-1.6 2.4v2h2.6c1.5-1.4 2.3-3.4 2.3-5.6Z"
-        fill="#4285F4"
-      />
-      <Path
-        d="M12 20c2.2 0 4-.7 5.3-2l-2.6-2a4.5 4.5 0 0 1-6.7-2.4H5.4v2C6.7 18.1 9.2 20 12 20Z"
-        fill="#34A853"
-      />
-      <Path
-        d="M8 13.6A4.6 4.6 0 0 1 8 10.4V8.4H5.4A8 8 0 0 0 4 12c0 1.3.3 2.5.8 3.6L8 13.6Z"
-        fill="#FBBC04"
-      />
-      <Path
-        d="M12 7.6c1.2 0 2.3.4 3.2 1.2l2.4-2.4A8 8 0 0 0 5.4 8.4L8 10.4A4.7 4.7 0 0 1 12 7.6Z"
-        fill="#EA4335"
-      />
-      {/* "Pay" wordmark */}
-      <Path
-        d="M26.4 7.2h3.2c1.9 0 3 1 3 2.7 0 1.7-1.1 2.7-3 2.7h-1.7v3H26.4V7.2Zm1.5 4.1h1.5c1 0 1.6-.5 1.6-1.4 0-.9-.6-1.4-1.6-1.4h-1.5v2.8Z"
-        fill="#fff"
-      />
-      <Path
-        d="M35.2 9.4c1.6 0 2.8.9 2.8 2.9v3.4H36.6v-.8c-.4.6-1 1-1.9 1-1.2 0-2.1-.7-2.1-1.8 0-1.1.9-1.8 2.3-1.8.6 0 1.1.1 1.5.4v-.3c0-.8-.5-1.3-1.4-1.3-.6 0-1.1.2-1.5.5l-.5-1c.6-.5 1.4-.8 2.2-.8Zm.3 4.8c.7 0 1.2-.5 1.2-1.1-.3-.2-.8-.3-1.3-.3-.8 0-1.2.3-1.2.8s.4.6 1.3.6Z"
-        fill="#fff"
-      />
-      <Path
-        d="M39 9.5h1.6l1.6 4.4 1.6-4.4H45.4l-2.8 7.4c-.4 1.1-1.1 1.7-2.1 1.7-.4 0-.8-.1-1.1-.2l.3-1.2c.2.1.4.1.6.1.5 0 .8-.2 1-.7l.2-.5L39 9.5Z"
-        fill="#fff"
-      />
+      <Path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0Z" fill="#fff" />
+      <Path d="M12 4.8A7.2 7.2 0 1 0 12 19.2 7.2 7.2 0 0 0 12 4.8Z" fill="#fff" />
+      <Path d="M19.6 12.2c0-.5 0-.9-.1-1.3H12v2.5h4.3a3.7 3.7 0 0 1-1.6 2.4v2h2.6c1.5-1.4 2.3-3.4 2.3-5.6Z" fill="#4285F4" />
+      <Path d="M12 20c2.2 0 4-.7 5.3-2l-2.6-2a4.5 4.5 0 0 1-6.7-2.4H5.4v2C6.7 18.1 9.2 20 12 20Z" fill="#34A853" />
+      <Path d="M8 13.6A4.6 4.6 0 0 1 8 10.4V8.4H5.4A8 8 0 0 0 4 12c0 1.3.3 2.5.8 3.6L8 13.6Z" fill="#FBBC04" />
+      <Path d="M12 7.6c1.2 0 2.3.4 3.2 1.2l2.4-2.4A8 8 0 0 0 5.4 8.4L8 10.4A4.7 4.7 0 0 1 12 7.6Z" fill="#EA4335" />
+      <Path d="M26.4 7.2h3.2c1.9 0 3 1 3 2.7 0 1.7-1.1 2.7-3 2.7h-1.7v3H26.4V7.2Zm1.5 4.1h1.5c1 0 1.6-.5 1.6-1.4 0-.9-.6-1.4-1.6-1.4h-1.5v2.8Z" fill="#fff" />
+      <Path d="M35.2 9.4c1.6 0 2.8.9 2.8 2.9v3.4H36.6v-.8c-.4.6-1 1-1.9 1-1.2 0-2.1-.7-2.1-1.8 0-1.1.9-1.8 2.3-1.8.6 0 1.1.1 1.5.4v-.3c0-.8-.5-1.3-1.4-1.3-.6 0-1.1.2-1.5.5l-.5-1c.6-.5 1.4-.8 2.2-.8Zm.3 4.8c.7 0 1.2-.5 1.2-1.1-.3-.2-.8-.3-1.3-.3-.8 0-1.2.3-1.2.8s.4.6 1.3.6Z" fill="#fff" />
+      <Path d="M39 9.5h1.6l1.6 4.4 1.6-4.4H45.4l-2.8 7.4c-.4 1.1-1.1 1.7-2.1 1.7-.4 0-.8-.1-1.1-.2l.3-1.2c.2.1.4.1.6.1.5 0 .8-.2 1-.7l.2-.5L39 9.5Z" fill="#fff" />
     </Svg>
   )
 }
 
-// ─── PhonePe SVG logo (official purple + P mark) ─────────────────────────────
 function PhonePeLogo() {
   return (
     <Svg width={24} height={24} viewBox="0 0 100 100">
       <Rect width="100" height="100" rx="20" fill="#5f259f" />
-      {/* P letterform */}
-      <Path
-        d="M28 18h26c13 0 21 8.5 21 20s-8 20-21 20H44v18l-16 7V18Zm16 11v18h10c6 0 9-3.6 9-9s-3-9-9-9H44Z"
-        fill="#fff"
-      />
+      <Path d="M28 18h26c13 0 21 8.5 21 20s-8 20-21 20H44v18l-16 7V18Zm16 11v18h10c6 0 9-3.6 9-9s-3-9-9-9H44Z" fill="#fff" />
     </Svg>
   )
 }
 
-// ─── UPI official logo ────────────────────────────────────────────────────────
 function UpiLogo() {
   return (
     <Svg width={44} height={20} viewBox="0 0 110 44">
       <Rect width="110" height="44" rx="6" fill="#fff" />
-      {/* left arrow */}
       <Path d="M12 8l9 26M21 8l-9 26" stroke="#097939" strokeWidth="5.5" strokeLinecap="round" />
-      {/* right arrow */}
       <Path d="M32 8l9 26M41 8l-9 26" stroke="#ed752e" strokeWidth="5.5" strokeLinecap="round" />
-      {/* U */}
       <Path d="M52 8v18c0 6 4 10 10 10s10-4 10-10V8" stroke="#097939" strokeWidth="5" strokeLinecap="round" fill="none" />
-      {/* P */}
       <Path d="M76 8h11c4 0 7 3 7 7s-3 7-7 7H79v14" stroke="#097939" strokeWidth="5" strokeLinecap="round" fill="none" />
       <Path d="M79 15h8c1.5 0 2.5.9 2.5 2.5S88.5 20 87 20h-8" stroke="#097939" strokeWidth="4" strokeLinecap="round" fill="none" />
-      {/* I */}
       <Path d="M100 8v28" stroke="#097939" strokeWidth="5" strokeLinecap="round" />
     </Svg>
   )
 }
 
-// ─── Custom alert hook ────────────────────────────────────────────────────────
 function useAlert() {
   const [alertState, setAlertState] = useState<{
     visible: boolean
@@ -121,7 +79,6 @@ function useAlert() {
   return { alertState, showAlert, dismiss }
 }
 
-// ─── Quick-add chip ────────────────────────────────────────────────────────────
 function QuickChip({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.chip} onPress={onPress} activeOpacity={0.72}>
@@ -130,7 +87,6 @@ function QuickChip({ label, onPress }: { label: string; onPress: () => void }) {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 export default function AddMoneySection() {
   const router = useRouter()
   const [amount, setAmount] = useState('')
@@ -138,23 +94,53 @@ export default function AddMoneySection() {
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
-  const pulseAnim = useRef(new Animated.Value(1)).current
+  const pulseAnim   = useRef(new Animated.Value(1)).current
   const { alertState, showAlert, dismiss } = useAlert()
 
-  // gentle balance pulse
+  const cardAnim    = useRef(new Animated.Value(0)).current
+  const inputAnim   = useRef(new Animated.Value(0)).current
+  const btnAnim     = useRef(new Animated.Value(0)).current
+  const noteAnim    = useRef(new Animated.Value(0)).current
+  const shineAnim   = useRef(new Animated.Value(-160)).current
+  const refundBlink = useRef(new Animated.Value(0)).current
+
   useEffect(() => {
+    Animated.stagger(120, [
+      Animated.spring(cardAnim,  { toValue: 1, useNativeDriver: true, damping: 12, stiffness: 90 }),
+      Animated.spring(inputAnim, { toValue: 1, useNativeDriver: true, damping: 12, stiffness: 90 }),
+      Animated.spring(btnAnim,   { toValue: 1, useNativeDriver: true, damping: 12, stiffness: 90 }),
+      Animated.spring(noteAnim,  { toValue: 1, useNativeDriver: true, damping: 12, stiffness: 90 }),
+    ]).start()
+
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.045, duration: 1400, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 1400, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1.04, duration: 1500, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1,    duration: 1500, useNativeDriver: true }),
       ]),
+    ).start()
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shineAnim, { toValue: 380, duration: 2400, easing: Easing.linear, useNativeDriver: true }),
+        Animated.delay(1500),
+      ])
+    ).start()
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(refundBlink, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(refundBlink, { toValue: 0, duration: 1000, useNativeDriver: true }),
+      ])
     ).start()
   }, [])
 
+  const animStyle = (anim: Animated.Value, offsetY = 28) => ({
+    opacity: anim,
+    transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [offsetY, 0] }) }],
+  })
+
   useEffect(() => {
-    const sub = auth.onAuthStateChanged(user => {
-      if (!user) router.replace('/')
-    })
+    const sub = auth.onAuthStateChanged(user => { if (!user) router.replace('/') })
     return () => sub()
   }, [router])
 
@@ -187,33 +173,22 @@ export default function AddMoneySection() {
         return
       }
       await Linking.openURL(url)
-    } catch (err) {
-      console.log('UPI open error:', err)
-      showAlert('Error', 'Unable to open payment app', [
-        { text: 'OK', style: 'confirm', onPress: dismiss },
-      ])
+    } catch {
+      showAlert('Error', 'Unable to open payment app', [{ text: 'OK', style: 'confirm', onPress: dismiss }])
     }
   }
 
   const startPayment = async () => {
     const amt = Number(amount)
-    if (!amt || isNaN(amt) || amt <= 1) {
-      showAlert('Invalid Amount', 'Minimum add amount is ₹ 1', [
-        { text: 'OK', style: 'confirm', onPress: dismiss },
-      ])
+    if (!amt || isNaN(amt) || amt < 300) {
+      showAlert('Invalid Amount', 'Minimum add amount is ₹ 300', [{ text: 'OK', style: 'confirm', onPress: dismiss }])
       return
     }
     const user = auth.currentUser
     if (!user) {
-      showAlert('Not Signed In', undefined, [
-        {
-          text: 'OK', style: 'confirm',
-          onPress: () => { dismiss(); router.replace('/') },
-        },
-      ])
+      showAlert('Not Signed In', undefined, [{ text: 'OK', style: 'confirm', onPress: () => { dismiss(); router.replace('/') } }])
       return
     }
-
     try {
       setLoading(true)
       let rawMobile = user.phoneNumber || ''
@@ -223,20 +198,14 @@ export default function AddMoneySection() {
           const udata: any = userDoc.data() || {}
           rawMobile = String(udata.phone || udata.mobile || rawMobile)
         }
-      } catch (e) {
-        console.warn('failed to read user phone from firestore', e)
-      }
-      const digits = ('' + rawMobile).replace(/\D/g, '')
-      const mobile10 = digits.length > 10 ? digits.slice(-10) : digits
+      } catch (e) { console.warn('failed to read user phone', e) }
 
-      const payload: any = {
-        userId: user.uid,
-        amount: amt,
-        customer_name: user.displayName || 'User',
-      }
+      const digits   = ('' + rawMobile).replace(/\D/g, '')
+      const mobile10 = digits.length > 10 ? digits.slice(-10) : digits
+      const payload: any = { userId: user.uid, amount: amt, customer_name: user.displayName || 'User' }
       if (mobile10 && mobile10.length === 10) {
         payload.customer_mobile = mobile10
-        payload.customer_email = user.email || `${mobile10}@userapp.com`
+        payload.customer_email  = user.email || `${mobile10}@userapp.com`
       } else {
         payload.customer_email = user.email || `${user.uid}@userapp.com`
       }
@@ -248,21 +217,15 @@ export default function AddMoneySection() {
       })
       const data = await resp.json().catch(() => ({}))
       const pUrl = data?.data?.payment_url || data?.payment_url || null
-      if (!pUrl) {
-        console.warn('create order response', data)
-        throw new Error('Failed to create payment session')
-      }
+      if (!pUrl) throw new Error('Failed to create payment session')
       setPaymentUrl(String(pUrl))
     } catch (err: any) {
-      showAlert('Payment Error', err?.message || String(err), [
-        { text: 'OK', style: 'confirm', onPress: dismiss },
-      ])
+      showAlert('Payment Error', err?.message || String(err), [{ text: 'OK', style: 'confirm', onPress: dismiss }])
     } finally {
       setLoading(false)
     }
   }
 
-  // ─── WebView ───────────────────────────────────────────────────────────────
   if (paymentUrl) {
     return (
       <WebView
@@ -274,20 +237,14 @@ export default function AddMoneySection() {
         onNavigationStateChange={navState => {
           const url = navState.url
           if (!url) return
-          if (
-            url.startsWith('tez://upi') ||
-            url.startsWith('intent://') ||
-            url.startsWith('paytmmp://') ||
-            url.startsWith('phonepe://')
-          ) {
-            Linking.openURL(url).catch(err => console.log('Failed to open UPI app', err))
-          }
+          if (url.startsWith('tez://upi') || url.startsWith('intent://') || url.startsWith('paytmmp://') || url.startsWith('phonepe://'))
+            Linking.openURL(url).catch(() => {})
         }}
         onShouldStartLoadWithRequest={request => {
           const url = request.url
-          if (url.startsWith('paytmmp://')) { openUpiAppSafely(url, 'Paytm'); return false }
+          if (url.startsWith('paytmmp://'))                                { openUpiAppSafely(url, 'Paytm');      return false }
           if (url.startsWith('tez://upi/') || url.startsWith('upi://pay')) { openUpiAppSafely(url, 'Google Pay'); return false }
-          if (url.startsWith('phonepe://pay') || url.startsWith('upi://')) { openUpiAppSafely(url, 'UPI App'); return false }
+          if (url.startsWith('phonepe://pay') || url.startsWith('upi://')) { openUpiAppSafely(url, 'UPI App');    return false }
           return true
         }}
         onMessage={event => {
@@ -303,19 +260,16 @@ export default function AddMoneySection() {
             } else {
               showAlert('Payment Failed', undefined, [{ text: 'OK', style: 'confirm', onPress: dismiss }])
             }
-          } catch (e) {
-            console.warn('webview message parse error', e)
-            setPaymentUrl(null)
-          }
+          } catch { setPaymentUrl(null) }
         }}
       />
     )
   }
 
-  // ─── Main UI ───────────────────────────────────────────────────────────────
+  const refundIconOpacity = refundBlink.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] })
+
   return (
     <View style={styles.container}>
-
       <CustomAlert
         visible={alertState.visible}
         title={alertState.title}
@@ -324,7 +278,6 @@ export default function AddMoneySection() {
         buttons={alertState.buttons}
       />
 
-      {/* Success modal */}
       <Modal visible={showSuccessPopup} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setShowSuccessPopup(false)}>
           <View style={styles.modalOverlay}>
@@ -341,225 +294,243 @@ export default function AddMoneySection() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Logo */}
-      <View style={styles.logoWrap}>
-        <View style={styles.logoShadow}>
-          <Image
-            source={require('../../assets/images/icon.png')}
-            style={styles.logo}
-            resizeMode="contain"
+      {/* ── WALLET CARD ─────────────────────────────────────────────────────── */}
+      <Animated.View style={[styles.walletCard, animStyle(cardAnim, 20)]}>
+        <View style={styles.walletTopRow}>
+
+          {/* Logo */}
+          <View style={styles.logoWrap}>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Balance */}
+          <View style={styles.walletRight}>
+            <Text style={styles.walletLabel}>WALLET BALANCE</Text>
+            <Animated.Text style={[styles.balance, { transform: [{ scale: pulseAnim }] }]}>
+              ₹ {wallet.toLocaleString('en-IN')}
+            </Animated.Text>
+            <View style={styles.badgeRow}>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>🕐  24 Hrs Open</Text>
+              </View>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>Min ₹ 1</Text>
+              </View>
+            </View>
+          </View>
+
+        </View>
+      </Animated.View>
+
+      {/* ── AMOUNT INPUT ─────────────────────────────────────────────────────── */}
+      <Animated.View style={animStyle(inputAnim)}>
+        <View style={styles.inputWrap}>
+          <Text style={styles.inputPrefix}>₹</Text>
+          <TextInput
+            placeholder="Enter amount"
+            placeholderTextColor="#4a5068"
+            keyboardType="numeric"
+            value={amount}
+            onChangeText={setAmount}
+            style={styles.input}
           />
         </View>
-      </View>
 
-      {/* Wallet card */}
-      <View style={styles.walletCard}>
-        <View  />
-        <Text style={styles.walletLabel}>WALLET BALANCE</Text>
-        <Animated.Text style={[styles.balance, { transform: [{ scale: pulseAnim }] }]}>
-          ₹ {wallet.toLocaleString('en-IN')}
-        </Animated.Text>
-        <View style={styles.badgeRow}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>🕐  24 Hrs Open</Text>
-          </View>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Min ₹ 1</Text>
+        {/* Quick chips */}
+        <View style={styles.chipRow}>
+          {['100', '200', '500', '1000'].map(v => (
+            <QuickChip key={v} label={`+₹${v}`} onPress={() => setAmount(v)} />
+          ))}
+        </View>
+      </Animated.View>
+
+      {/* ── ADD MONEY BUTTON ─────────────────────────────────────────────────── */}
+      <Animated.View style={animStyle(btnAnim)}>
+        <TouchableOpacity
+          onPress={startPayment}
+          disabled={loading}
+          style={[styles.payButton, loading && styles.payButtonDisabled]}
+          activeOpacity={0.85}
+        >
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.btnShine, { transform: [{ translateX: shineAnim }, { rotate: '20deg' }] }]}
+          />
+          {loading ? (
+            <View style={styles.btnInner}>
+              <ActivityIndicator color="#111827" size="small" style={{ marginRight: 8 }} />
+              <Text style={styles.payText}>Processing…</Text>
+            </View>
+          ) : (
+            <Text style={styles.payText}>Add Money</Text>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* ── BOTTOM INFO ──────────────────────────────────────────────────────── */}
+      <Animated.View style={animStyle(noteAnim)}>
+
+        {/* Secure */}
+        <Text style={styles.secureNote}>🔒  Payments are 100% secure & encrypted</Text>
+
+        {/* Refund banner */}
+        <View style={styles.refundBanner}>
+          <Animated.Text style={[styles.refundIcon, { opacity: refundIconOpacity }]}>⚠️</Animated.Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.refundTitle}>Deduction Refund Policy</Text>
+            <Text style={styles.refundBody}>
+              If any amount is deducted and not credited to your wallet, it will be refunded within{' '}
+              <Text style={styles.refundHighlight}>24 hours</Text>.{' '}
+              Contact support for help.
+            </Text>
           </View>
         </View>
-      </View>
 
-      {/* Amount input */}
-      <View style={styles.inputWrap}>
-        <Text style={styles.inputPrefix}>₹</Text>
-        <TextInput
-          placeholder="Enter amount"
-          placeholderTextColor="#fff"
-          keyboardType="numeric"
-          value={amount}
-          onChangeText={setAmount}
-          style={styles.input}
-        />
-      </View>
+        {/* Accepted via */}
+        <View style={styles.acceptedSection}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.acceptedLabel}>ACCEPTED VIA</Text>
+          <View style={styles.dividerLine} />
+        </View>
 
-      {/* Quick-add chips */}
-      <View style={styles.chipRow}>
-        {['100', '200', '500', '1000'].map(v => (
-          <QuickChip key={v} label={`+₹${v}`} onPress={() => setAmount(v)} />
-        ))}
-      </View>
-
-      {/* Add Money button */}
-      <TouchableOpacity
-        onPress={startPayment}
-        disabled={loading}
-        style={[styles.payButton, loading && styles.payButtonDisabled]}
-        activeOpacity={0.85}
-      >
-        {loading ? (
-          <View style={styles.btnInner}>
-            <ActivityIndicator color="#111827" size="small" style={{ marginRight: 8 }} />
-            <Text style={styles.payText}>Processing…</Text>
+        <View style={styles.upiRow}>
+          <View style={[styles.upiChip, styles.gpayChip]}>
+            <GPayLogo />
           </View>
-        ) : (
-          <Text style={styles.payText}>Add Money</Text>
-        )}
-      </TouchableOpacity>
-
-      {/* Secure badge */}
-      <Text style={styles.secureNote}>🔒  Payments are 100% secure & encrypted</Text>
-
-      {/* Accepted via divider */}
-      <View style={styles.acceptedSection}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.acceptedLabel}>ACCEPTED VIA</Text>
-        <View style={styles.dividerLine} />
-      </View>
-
-      {/* UPI logo row */}
-      <View style={styles.upiRow}>
-        {/* GPay chip */}
-        <View style={[styles.upiChip, styles.gpayChip]}>
-          <GPayLogo />
+          <View style={[styles.upiChip, styles.phonePeChip]}>
+            <PhonePeLogo />
+            <Text style={styles.ppLabel}>PhonePe</Text>
+          </View>
+         
         </View>
 
-        {/* PhonePe chip */}
-        <View style={[styles.upiChip, styles.phonePeChip]}>
-          <PhonePeLogo />
-          <Text style={styles.ppLabel}>PhonePe</Text>
-        </View>
-
-       
-      </View>
-
+      </Animated.View>
     </View>
   )
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────────
-const CARD_BG = '#14162e'
-const BORDER = '#22264a'
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const CARD_BG = '#13152c'
+const BORDER  = '#1e2240'
 const PRIMARY = '#facc15'
-const GREEN = '#22c55e'
-const MUTED = '#505580'
+const GREEN   = '#22c55e'
+const MUTED   = '#505580'
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#10112a',
-    paddingHorizontal: 18,
-    paddingBottom: 28,
+    backgroundColor: '#0e0f26',
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 20,
+    gap: 14,                   // ← uniform gap between every section
   },
 
-  logoWrap: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 4,
-  },
-  logoShadow: {
-    borderRadius: 18,
-    shadowColor: PRIMARY,
-    shadowOpacity: 0.25,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-  },
-  logo: {
-    width: 88,
-    height: 88,
-    borderRadius: 18,
-  },
-
+  // ── Wallet card ─────────────────────────────────────────────────────────────
   walletCard: {
-    marginTop: 18,
     backgroundColor: CARD_BG,
     borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
+    padding: 20,
     borderWidth: 1,
     borderColor: BORDER,
-    overflow: 'hidden',
     shadowColor: GREEN,
-    shadowOpacity: 0.07,
-    shadowRadius: 24,
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
     shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    elevation: 5,
   },
-  glowBlob: {
-    position: 'absolute',
-    width: 220,
-    height: 90,
-    borderRadius: 110,
-    backgroundColor: '#fff',
-    top: -30,
-    alignSelf: 'center',
+  walletTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  logoWrap: {
+    borderRadius: 16,
+    shadowColor: PRIMARY,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
+  },
+  logo: {
+    width: 72,
+    height: 72,
+    borderRadius: 16,
+  },
+  walletRight: {
+    flex: 1,
+    gap: 6,
   },
   walletLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 2,
-    marginBottom: 10,
+    color: '#6b7498',
+    letterSpacing: 2.5,
   },
   balance: {
-    fontSize: 44,
+    fontSize: 36,
     fontWeight: '900',
     color: GREEN,
-    letterSpacing: -1.5,
-    marginBottom: 16,
+    letterSpacing: -1,
   },
   badgeRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 7,
+    flexWrap: 'wrap',
   },
   badge: {
-    backgroundColor: '#1c1f40',
+    backgroundColor: '#1a1d3a',
     borderRadius: 20,
     paddingVertical: 5,
-    paddingHorizontal: 13,
+    paddingHorizontal: 11,
     borderWidth: 1,
     borderColor: BORDER,
   },
   badgeText: {
     color: PRIMARY,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
 
+  // ── Input ───────────────────────────────────────────────────────────────────
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
     backgroundColor: CARD_BG,
     borderWidth: 1.5,
     borderColor: BORDER,
-    borderRadius: 14,
-    paddingHorizontal: 16,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    marginBottom: 12,
   },
   inputPrefix: {
     color: PRIMARY,
     fontSize: 22,
     fontWeight: '900',
-    marginRight: 8,
+    marginRight: 10,
   },
   input: {
     flex: 1,
     color: '#ffffff',
     fontSize: 20,
     fontWeight: '700',
-    paddingVertical: 14,
+    paddingVertical: 15,
   },
 
+  // ── Quick chips ─────────────────────────────────────────────────────────────
   chipRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 12,
   },
   chip: {
     flex: 1,
-    backgroundColor: '#1c1f40',
-    borderRadius: 10,
-    paddingVertical: 9,
+    backgroundColor: '#1a1d3a',
+    borderRadius: 12,
+    paddingVertical: 11,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: BORDER,
@@ -570,41 +541,87 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
+  // ── Pay button ──────────────────────────────────────────────────────────────
   payButton: {
-    marginTop: 18,
     backgroundColor: PRIMARY,
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingVertical: 17,
+    borderRadius: 16,
     alignItems: 'center',
+    overflow: 'hidden',
     shadowColor: PRIMARY,
     shadowOpacity: 0.45,
-    shadowRadius: 14,
+    shadowRadius: 16,
     shadowOffset: { width: 0, height: 5 },
-    elevation: 6,
+    elevation: 7,
   },
-  payButtonDisabled: { opacity: 0.7 },
+  payButtonDisabled: { opacity: 0.65 },
+  btnShine: {
+    position: 'absolute',
+    top: -10,
+    width: 60,
+    height: 90,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 16,
+  },
   btnInner: { flexDirection: 'row', alignItems: 'center' },
   payText: {
     color: '#111827',
     fontWeight: '900',
     fontSize: 17,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
 
+  // ── Secure note ─────────────────────────────────────────────────────────────
   secureNote: {
     textAlign: 'center',
-    color: '#fff',
+    color: '#6b7498',
     fontSize: 11,
-    marginTop: 13,
     fontWeight: '600',
     letterSpacing: 0.2,
+    marginBottom: 12,
   },
 
+  // ── Refund banner ───────────────────────────────────────────────────────────
+  refundBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: '#17130a',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#5c4300',
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    marginBottom: 18,
+  },
+  refundIcon: {
+    fontSize: 17,
+    marginTop: 1,
+  },
+  refundTitle: {
+    color: PRIMARY,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    marginBottom: 5,
+  },
+  refundBody: {
+    color: '#b89d4e',
+    fontSize: 11,
+    lineHeight: 17,
+    fontWeight: '500',
+  },
+  refundHighlight: {
+    color: PRIMARY,
+    fontWeight: '900',
+  },
+
+  // ── Accepted via ────────────────────────────────────────────────────────────
   acceptedSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 22,
     gap: 10,
+    marginBottom: 14,
   },
   dividerLine: {
     flex: 1,
@@ -612,35 +629,30 @@ const styles = StyleSheet.create({
     backgroundColor: BORDER,
   },
   acceptedLabel: {
-    color: '#fff',
-    fontSize: 10,
+    color: '#6b7498',
+    fontSize: 9,
     fontWeight: '700',
-    letterSpacing: 2,
+    letterSpacing: 2.5,
   },
 
+  // ── UPI row ─────────────────────────────────────────────────────────────────
   upiRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 14,
-    gap: 10,
+    gap: 12,
   },
   upiChip: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
-    paddingVertical: 9,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: BORDER,
   },
-  gpayChip: {
-    backgroundColor: '#1c1f3e',
-  },
-  phonePeChip: {
-    backgroundColor: '#3a1660',
-    gap: 8,
-  },
+  gpayChip:    { backgroundColor: '#1a1d3e' },
+  phonePeChip: { backgroundColor: '#2a0e4a', gap: 8 },
   ppLabel: {
     color: '#fff',
     fontWeight: '800',
@@ -648,58 +660,45 @@ const styles = StyleSheet.create({
   },
   upiGenChip: {
     backgroundColor: '#fff',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderColor: '#ddd',
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderColor: '#e0e0e0',
   },
 
+  // ── Modal ───────────────────────────────────────────────────────────────────
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCard: {
-    width: '82%',
+    width: '80%',
     backgroundColor: CARD_BG,
-    borderRadius: 22,
-    padding: 30,
+    borderRadius: 24,
+    padding: 32,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: BORDER,
   },
   successRing: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#22c55e1a',
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: '#22c55e18',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 18,
   },
   successIcon: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: GREEN,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  successIconText: {
-    color: '#fff',
-    fontSize: 34,
-    fontWeight: '900',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#f4f6ff',
-    marginBottom: 6,
-  },
-  modalSub: {
-    fontSize: 13,
-    color: MUTED,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+  successIconText: { color: '#fff', fontSize: 32, fontWeight: '900' },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: '#f0f4ff', marginBottom: 8 },
+  modalSub:   { fontSize: 13, color: MUTED, textAlign: 'center', lineHeight: 20 },
 })
