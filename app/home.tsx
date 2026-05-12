@@ -561,13 +561,16 @@ export default function HomeScreen() {
               onPress={() => (open ? closeDrawer() : openDrawer())}
               style={styles.drawerButton}
             >
-              <View style={styles.logoBox}>
-                <Image
-                  source={require("../assets/images/icon.png")}
-                  style={styles.logoImg}
-                  resizeMode="cover"
-                />
+              <TouchableOpacity
+              onPress={() => (open ? closeDrawer() : openDrawer())}
+              style={styles.drawerButton}
+            >
+              <View style={{ justifyContent: 'center', alignItems: 'center', width: 40, height: 40 }}>
+                <View style={styles.hamburger} />
+                <View style={styles.hamburger} />
+                <View style={styles.hamburger} />
               </View>
+            </TouchableOpacity>
             </TouchableOpacity>
 
             <View style={styles.titleContainer}>
