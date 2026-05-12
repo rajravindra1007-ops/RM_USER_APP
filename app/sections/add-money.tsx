@@ -225,11 +225,11 @@ export default function AddMoneySection() {
       )
     }
   }
- const quickAmounts = [300, 500, 1000, 2000]
+  const quickAmounts = [300, 500, 1000, 2000]
   const startPayment = async () => {
     const amt = Number(amount)
 
-    if (!amt || isNaN(amt) || amt < 1) {
+    if (!amt || isNaN(amt) || amt < 300) {
       showAlert(
         'Invalid Amount',
         'Minimum add amount is ₹300',
@@ -269,11 +269,11 @@ export default function AddMoneySection() {
 
           rawMobile = String(
             udata.phone ||
-              udata.mobile ||
-              ''
+            udata.mobile ||
+            ''
           )
         }
-      } catch {}
+      } catch { }
 
       const digits = (
         '' + rawMobile
@@ -531,7 +531,7 @@ export default function AddMoneySection() {
           style={styles.input}
         />
       </View>
-       <View style={styles.chipContainer}>
+      <View style={styles.chipContainer}>
         {quickAmounts.map(val => (
           <TouchableOpacity
             key={val}
@@ -563,7 +563,7 @@ export default function AddMoneySection() {
           ]}
         />
 
-        
+
 
         {loading ? (
           <ActivityIndicator color="#111827" />
@@ -579,7 +579,7 @@ export default function AddMoneySection() {
 
 const styles = StyleSheet.create({
 
-   chipContainer: {
+  chipContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 18,
