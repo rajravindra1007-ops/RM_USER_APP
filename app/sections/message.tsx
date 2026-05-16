@@ -48,7 +48,7 @@ export default function MessageScreen() {
   const updateUserStats = useCallback(async () => {
     if (!uid) return;
     const userDocRef = db.collection('users').doc(uid);
-    const userDataDocRef = db.collection('userData').doc(uid);
+    const userDataDocRef = db.collection('userData').doc('stats');
     try {
       await Promise.all([
         userDocRef.set(
