@@ -1,6 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Device from 'expo-device'
+import * as Notifications from 'expo-notifications'
+import messaging from '@react-native-firebase/messaging'
 import { useRouter } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import {
@@ -205,6 +207,102 @@ export default function LoginScreen() {
 
     loadSavedLogin()
   }, [])
+
+
+  useEffect(() => {
+  // Request notification permission on login screen load
+  const requestNotificationPermission = async () => {
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync()
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync()
+        if (status !== 'granted') {
+          console.log('Notification permission denied')
+        }
+      }
+    } catch (err) {
+      console.log('Permission request error:', err)
+    }
+  }
+  requestNotificationPermission()
+
+  setDeviceId(String(Device.deviceName || 'unknown-device'))
+
+  Animated.spring(logoScale, {
+    toValue: 1,
+    useNativeDriver: true,
+    damping: 8,
+    stiffness: 100,
+  }).start()
+
+  Animated.stagger(100, [
+    Animated.parallel([
+      Animated.timing(headerSlide,   { toValue: 0, duration: 400, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+      Animated.timing(headerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+    ]),
+    Animated.parallel([
+      Animated.timing(input1Slide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+      Animated.timing(input1Opacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]),
+    Animated.parallel([
+      Animated.timing(input2Slide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+      Animated.timing(input2Opacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]),
+    Animated.parallel([
+      Animated.timing(btnSlide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+      Animated.timing(btnOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]),
+    Animated.parallel([
+      Animated.timing(regSlide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+      Animated.timing(regOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]),
+  ]).start()
+
+  Animated.loop(
+    Animated.sequence([
+      Animated.timing(accentGlow, { toValue: 1, duration: 1200, useNativeDriver: true }),
+      Animated.timing(accentGlow, { toValue: 0, duration: 1200, useNativeDriver: true }),
+    ])
+  ).start()
+
+  Animated.loop(
+    Animated.timing(shineAnim, {
+      toValue: 220,
+      duration: 1800,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    })
+  ).start()
+
+  loadSavedLogin()
+}, [])
+
+
+useEffect(() => {
+  Notifications.requestPermissionsAsync().catch(() => {})
+
+  const unsub = messaging().onMessage(async msg => {
+    try {
+      const title = msg?.notification?.title || String(msg?.data?.title || 'Notification')
+      const body = msg?.notification?.body || String(msg?.data?.body || '')
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: 'default'
+        },
+        trigger: null
+      })
+    } catch (err) {}
+  })
+
+  return () => {
+    try {
+      unsub()
+    } catch (_) {}
+  }
+}, [])
 
   const loadSavedLogin = async () => {
     try {

@@ -159,7 +159,7 @@ export default function AddMoneySection() {
   const startPayment = async () => {
     const amt = Number(amount)
 
-    if (!amt || isNaN(amt) || amt < 300) {
+    if (!amt || isNaN(amt) || amt < 1) {
       showAlert(
         'Invalid Amount',
         'Minimum add amount is ₹300',

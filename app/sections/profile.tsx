@@ -1,5 +1,7 @@
 // app/sections/profile.tsx
 
+import messaging from '@react-native-firebase/messaging';
+import * as Notifications from 'expo-notifications';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -8,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,7 +52,16 @@ export default function ProfileSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
+  const [notifPermission, setNotifPermission] = useState<string | null>(null)
   const heroAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const checkPermission = async () => {
+      const { status } = await Notifications.getPermissionsAsync()
+      setNotifPermission(status)
+    }
+    checkPermission()
+  }, [uid])
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(user => { setUid(user?.uid ?? null); });
@@ -86,6 +98,21 @@ export default function ProfileSection() {
     () => `₹ ${Number(userDoc?.wallet ?? 0).toLocaleString('en-IN')}`,
     [userDoc]
   );
+
+  const saveFcmToken = async () => {
+    try {
+      const { status } = await Notifications.requestPermissionsAsync()
+      setNotifPermission(status)
+      if (status !== 'granted') return
+
+      const token = await messaging().getToken()
+      if (token && uid) {
+        await db.collection('users').doc(uid).set({ fcmToken: token }, { merge: true })
+      }
+    } catch (err) {
+      console.log('FCM token error:', err)
+    }
+  }
 
   if (loading) {
     return (
@@ -164,6 +191,36 @@ export default function ProfileSection() {
               <View style={styles.statDivider} />
               <StatPill label="Member Since" value={createdAtText} />
             </View>
+            {notifPermission !== 'granted' ? (
+              <TouchableOpacity
+                onPress={saveFcmToken}
+                style={{
+                  marginTop: 14,
+                  backgroundColor: T.gold,
+                  borderRadius: 12,
+                  paddingVertical: 13,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#111', fontWeight: '800', fontSize: 14 }}>
+                  🔔 Allow Notifications on This Device
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={{
+                marginTop: 14,
+                backgroundColor: T.cardAlt,
+                borderRadius: 12,
+                paddingVertical: 13,
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: T.border,
+              }}>
+                <Text style={{ color: '#4ade80', fontWeight: '700', fontSize: 14 }}>
+                  ✅ Notifications Enabled
+                </Text>
+              </View>
+            )}
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
