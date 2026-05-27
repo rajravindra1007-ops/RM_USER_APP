@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, Alert, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useRouter } from 'expo-router'
+import React, { useEffect, useState } from 'react'
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function ForgotPasswordScreen() {
   const router = useRouter()
@@ -10,10 +10,10 @@ export default function ForgotPasswordScreen() {
   const [newPassword, setNewPassword] = useState('')
   const [resetting, setResetting] = useState(false)
 
-  const OTP_SERVER_BASE = 'https://serverotp-iepk.onrender.com'
+  const OTP_SERVER_BASE = 'https://api.rmgames.live'
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const last = await AsyncStorage.getItem('lastPhone')
         if (last) setPhone(last)

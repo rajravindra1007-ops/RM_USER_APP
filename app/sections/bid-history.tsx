@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import React, { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
 import { auth, db } from '../../firebaseConfig'
@@ -64,51 +63,141 @@ const toMillis = (value: any) => {
 
 export default function BidHistorySection() {
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [todayBets, setTodayBets] = useState<Bet[]>([])
   const [userBets, setUserBets] = useState<Bet[]>([])
+  const [lastDocToday, setLastDocToday] = useState<any>(null)
+  const [lastDocUser, setLastDocUser] = useState<any>(null)
+  const [hasMoreToday, setHasMoreToday] = useState(true)
+  const [hasMoreUser, setHasMoreUser] = useState(true)
   const [filter, setFilter] = useState<string>('ALL')
   const [showTodayOnly, setShowTodayOnly] = useState(true)
 
   const uid = auth.currentUser ? auth.currentUser.uid : null
 
-  const cacheKeys = useMemo(() => {
-    if (!uid) return null
-    return {
-      today: `bidHistory:todayBets:${uid}`,
-      user: `bidHistory:userBets:${uid}`,
+
+
+  const fetchTodayBets = async (isMore = false) => {
+    if (!uid) return
+    if (isMore && !hasMoreToday) return
+
+    if (isMore) {
+      setLoadingMore(true)
+    } else {
+      setLoading(true)
     }
-  }, [uid])
+    setError(null)
 
-  useEffect(() => {
-    if (!cacheKeys) return
-    let cancelled = false
+    try {
+      let query = db
+        .collection('todaysBets')
+        .where('userId', '==', uid)
+        .limit(5)
 
-    ;(async () => {
-      try {
-        const [todayRaw, userRaw] = await Promise.all([
-          AsyncStorage.getItem(cacheKeys.today),
-          AsyncStorage.getItem(cacheKeys.user),
-        ])
-        if (cancelled) return
-
-        if (todayRaw) {
-          const parsed = JSON.parse(todayRaw)
-          if (Array.isArray(parsed)) setTodayBets(parsed)
-        }
-        if (userRaw) {
-          const parsed = JSON.parse(userRaw)
-          if (Array.isArray(parsed)) setUserBets(parsed)
-        }
-      } catch {
-        // ignore cache read errors
+      if (isMore && lastDocToday) {
+        query = query.startAfter(lastDocToday)
       }
-    })()
 
-    return () => {
-      cancelled = true
+      const snap = await query.get()
+      const arr: Bet[] = []
+      snap.forEach((doc: any) => {
+        arr.push({ ...(doc.data() || {}), id: doc.id })
+      })
+
+      let updatedList = arr
+      if (isMore) {
+        setTodayBets((prev) => {
+          updatedList = [...prev, ...arr].sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+          return updatedList
+        })
+      } else {
+        updatedList = arr.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+        setTodayBets(updatedList)
+      }
+
+      if (snap.docs.length > 0) {
+        setLastDocToday(snap.docs[snap.docs.length - 1])
+      } else if (!isMore) {
+        setLastDocToday(null)
+      }
+
+      if (snap.docs.length < 5) {
+        setHasMoreToday(false)
+      } else {
+        setHasMoreToday(true)
+      }
+
+
+    } catch (err: any) {
+      console.error('Error fetching today bets:', err)
+      setError(err.message || String(err))
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
     }
-  }, [cacheKeys])
+  }
+
+  const fetchUserBets = async (isMore = false) => {
+    if (!uid) return
+    if (isMore && !hasMoreUser) return
+
+    if (isMore) {
+      setLoadingMore(true)
+    } else {
+      setLoading(true)
+    }
+    setError(null)
+
+    try {
+      let query = db
+        .collection('users')
+        .doc(uid)
+        .collection('userbets')
+        .orderBy('createdAt', 'desc')
+        .limit(5)
+
+      if (isMore && lastDocUser) {
+        query = query.startAfter(lastDocUser)
+      }
+
+      const snap = await query.get()
+      const arr: Bet[] = []
+      snap.forEach((doc: any) => {
+        arr.push({ ...(doc.data() || {}), id: doc.id })
+      })
+
+      let updatedList = arr
+      if (isMore) {
+        setUserBets((prev) => {
+          updatedList = [...prev, ...arr]
+          return updatedList
+        })
+      } else {
+        setUserBets(arr)
+      }
+
+      if (snap.docs.length > 0) {
+        setLastDocUser(snap.docs[snap.docs.length - 1])
+      } else if (!isMore) {
+        setLastDocUser(null)
+      }
+
+      if (snap.docs.length < 5) {
+        setHasMoreUser(false)
+      } else {
+        setHasMoreUser(true)
+      }
+
+
+    } catch (err: any) {
+      console.error('Error fetching user bets:', err)
+      setError(err.message || String(err))
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }
 
   useEffect(() => {
     if (!uid) {
@@ -117,58 +206,47 @@ export default function BidHistorySection() {
       return
     }
 
-    setLoading(true)
-    setError(null)
-
-    const userBetQuery: any = db.collection('users').doc(uid).collection('userbets').orderBy('createdAt', 'desc')
-    const todayBetQuery: any = db.collection('todaysBets').where('userId', '==', uid)
-
-    const unsubUserBets = userBetQuery.onSnapshot(
-      (snap: any) => {
-        const arr: Bet[] = []
-        snap.forEach((doc: any) => {
-          arr.push({ ...(doc.data() || {}), id: doc.id })
-        })
-        setUserBets(arr)
-        if (cacheKeys?.user) {
-          void AsyncStorage.setItem(cacheKeys.user, JSON.stringify(arr)).catch(() => {})
-        }
-        setLoading(false)
-      },
-      (err: any) => {
-        setError(err.message || String(err))
-        setLoading(false)
-      }
-    )
-
-    const unsubTodayBets = todayBetQuery.onSnapshot(
-      (snap: any) => {
-        const arr: Bet[] = []
-        snap.forEach((doc: any) => {
-          arr.push({ ...(doc.data() || {}), id: doc.id })
-        })
-        arr.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
-        setTodayBets(arr)
-        if (cacheKeys?.today) {
-          void AsyncStorage.setItem(cacheKeys.today, JSON.stringify(arr)).catch(() => {})
-        }
-        setLoading(false)
-      },
-      (err: any) => {
-        setError(err.message || String(err))
-        setLoading(false)
-      }
-    )
-
-    return () => {
-      unsubUserBets()
-      unsubTodayBets()
+    if (showTodayOnly) {
+      setTodayBets([])
+      fetchTodayBets(false)
+    } else {
+      setUserBets([])
+      fetchUserBets(false)
     }
-  }, [uid])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, showTodayOnly])
+
+  const handleReadMore = () => {
+    if (loadingMore) return
+    if (showTodayOnly) {
+      fetchTodayBets(true)
+    } else {
+      fetchUserBets(true)
+    }
+  }
+
+  const renderFooter = () => {
+    const hasMore = showTodayOnly ? hasMoreToday : hasMoreUser
+    if (!hasMore) return null
+
+    return (
+      <TouchableOpacity
+        style={[styles.readMoreBtn, loadingMore && styles.readMoreBtnDisabled]}
+        onPress={handleReadMore}
+        disabled={loadingMore}
+      >
+        {loadingMore ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={styles.readMoreText}>Read More</Text>
+        )}
+      </TouchableOpacity>
+    )
+  }
 
   const renderNumber = (item: Bet) => {
     // Handle Half Sangam fields (open/close variants)
-      if (item.HSOpenDigitnumber || item.HSClosePananumber || item.HSCloseDigitnumber || item.HSOpenPananumber) {
+    if (item.HSOpenDigitnumber || item.HSClosePananumber || item.HSCloseDigitnumber || item.HSOpenPananumber) {
       if (item.open || item.HSOpenDigitnumber) {
         const a = item.HSOpenDigitnumber || ''
         const b = item.HSClosePananumber || ''
@@ -180,27 +258,27 @@ export default function BidHistorySection() {
         return `${a}-${b}`
       }
     }
-      // Handle Full Sangam fields
-      if (item.FSOpenPananumber || item.FSClosePananumber) {
-        if (item.open || item.FSOpenPananumber) {
-          const a = item.FSOpenPananumber || ''
-          const b = item.FSClosePananumber || ''
-          return `${a}-${b}`
-        }
-        if (item.close || item.FSClosePananumber) {
-          const a = item.FSClosePananumber || ''
-          const b = item.FSOpenPananumber || ''
-          return `${a}-${b}`
-        }
+    // Handle Full Sangam fields
+    if (item.FSOpenPananumber || item.FSClosePananumber) {
+      if (item.open || item.FSOpenPananumber) {
+        const a = item.FSOpenPananumber || ''
+        const b = item.FSClosePananumber || ''
+        return `${a}-${b}`
       }
+      if (item.close || item.FSClosePananumber) {
+        const a = item.FSClosePananumber || ''
+        const b = item.FSOpenPananumber || ''
+        return `${a}-${b}`
+      }
+    }
     return (
       item.SDnumber ||
       item.JDnumber ||
       item.SPnumber ||
-        item.DPnumber ||
-        item.TPnumber ||
-        // FS numbers (fallback)
-        (item.FSOpenPananumber && item.FSClosePananumber ? `${item.FSOpenPananumber}-${item.FSClosePananumber}` : null) ||
+      item.DPnumber ||
+      item.TPnumber ||
+      // FS numbers (fallback)
+      (item.FSOpenPananumber && item.FSClosePananumber ? `${item.FSOpenPananumber}-${item.FSClosePananumber}` : null) ||
       '-'
     )
   }
@@ -286,45 +364,47 @@ export default function BidHistorySection() {
 
   return (
     <>
-    <View style={styles.container}>
-      <View style={styles.filterBar}>
-        <View style={styles.toggleContainer}>
-          <Text style={styles.toggleLabel}>Today</Text>
-          <Switch
-            value={showTodayOnly}
-            onValueChange={setShowTodayOnly}
-            trackColor={{ false: '#d1d5db', true: '#0b1f4c' }}
-            thumbColor="#fff"
-          />
+      <View style={styles.container}>
+        <View style={styles.filterBar}>
+          <View style={styles.toggleContainer}>
+            <Text style={styles.toggleLabel}>Today</Text>
+            <Switch
+              value={showTodayOnly}
+              onValueChange={setShowTodayOnly}
+              trackColor={{ false: '#d1d5db', true: '#0b1f4c' }}
+              thumbColor="#fff"
+            />
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8 }} style={{ flex: 1 }}>
+            {FILTERS.map((f) => (
+              <TouchableOpacity
+                key={f.key}
+                onPress={() => setFilter(f.code || 'ALL')}
+                style={[styles.filterBtn, filter === (f.code || 'ALL') ? styles.filterBtnActive : null]}
+              >
+                <Text style={[styles.filterText, filter === (f.code || 'ALL') ? styles.filterTextActive : null]}>{f.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <View style={styles.countBox}>
+            {/* <Text style={styles.countText}>{activeCount}</Text> */}
+          </View>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8 }} style={{ flex: 1 }}>
-          {FILTERS.map((f) => (
-            <TouchableOpacity
-              key={f.key}
-              onPress={() => setFilter(f.code || 'ALL')}
-              style={[styles.filterBtn, filter === (f.code || 'ALL') ? styles.filterBtnActive : null]}
-            >
-              <Text style={[styles.filterText, filter === (f.code || 'ALL') ? styles.filterTextActive : null]}>{f.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <View style={styles.countBox}>
-          {/* <Text style={styles.countText}>{activeCount}</Text> */}
-        </View>
-      </View>
 
-      {displayedBets.length === 0 ? (
-        <View style={styles.center}><Text>No bets found</Text></View>
-      ) : (
         <FlatList
           data={displayedBets}
           keyExtractor={(i: any, idx) => i.id || String(idx)}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 12 }}
+          ListEmptyComponent={() => (
+            <View style={[styles.center, { marginTop: 40 }]}>
+              <Text style={{ color: '#666', fontSize: 16 }}>No bets found</Text>
+            </View>
+          )}
+          ListFooterComponent={renderFooter}
         />
-      )}
-    </View>
-    <BottomNav active="bid-history" />
+      </View>
+      <BottomNav active="bid-history" />
     </>
   )
 }
@@ -362,4 +442,28 @@ const styles = StyleSheet.create({
   directionText: { fontSize: 12, fontWeight: '700' },
   directionTextOpen: { color: '#166534' },
   directionTextClose: { color: '#92400e' },
+  readMoreBtn: {
+    backgroundColor: '#0b1f4c',
+    paddingVertical: 12,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
+    marginHorizontal: 20,
+    shadowColor: '#0b1f4c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  readMoreBtnDisabled: {
+    backgroundColor: '#cbd5e1',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  readMoreText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
 })

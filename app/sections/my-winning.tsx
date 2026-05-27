@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react'
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native'
+import React, { useEffect, useMemo, useState } from 'react'
+import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
 import { auth, db } from '../../firebaseConfig'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 
 type Bet = {
   id?: string
@@ -45,108 +44,189 @@ const toMillis = (value: any) => {
 
 export default function MyWinningSection() {
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [todayBets, setTodayBets] = useState<Bet[]>([])
   const [userBets, setUserBets] = useState<Bet[]>([])
+  const [lastDocToday, setLastDocToday] = useState<any>(null)
+  const [lastDocUser, setLastDocUser] = useState<any>(null)
+  const [hasMoreToday, setHasMoreToday] = useState(true)
+  const [hasMoreUser, setHasMoreUser] = useState(true)
   const [filter, setFilter] = useState<string>('ALL')
   const [showTodayOnly, setShowTodayOnly] = useState(true)
   const uid = auth.currentUser ? auth.currentUser.uid : null
 
-  const cacheKeys = useMemo(() => {
-    if (!uid) return null
-    return {
-      today: `myWinning:todayCompletedBets:${uid}`,
-      user: `myWinning:userBets:${uid}`,
+
+
+  const fetchTodayBets = async (isMore = false) => {
+    if (!uid) return
+    if (isMore && !hasMoreToday) return
+
+    if (isMore) {
+      setLoadingMore(true)
+    } else {
+      setLoading(true)
     }
-  }, [uid])
+    setError(null)
 
-  useEffect(() => {
-    if (!cacheKeys) return
-    let cancelled = false
+    try {
+      let query = db
+        .collection('todaysCompletedBets')
+        .where('userId', '==', uid)
+        .where('isWinner', '==', true)
+        .limit(5)
 
-    ;(async () => {
-      try {
-        const [todayRaw, userRaw] = await Promise.all([
-          AsyncStorage.getItem(cacheKeys.today),
-          AsyncStorage.getItem(cacheKeys.user),
-        ])
-        if (cancelled) return
-
-        if (todayRaw) {
-          const parsed = JSON.parse(todayRaw)
-          if (Array.isArray(parsed)) setTodayBets(parsed)
-        }
-        if (userRaw) {
-          const parsed = JSON.parse(userRaw)
-          if (Array.isArray(parsed)) setUserBets(parsed)
-        }
-      } catch {
-        // ignore cache read errors
+      if (isMore && lastDocToday) {
+        query = query.startAfter(lastDocToday)
       }
-    })()
 
-    return () => {
-      cancelled = true
+      const snap = await query.get()
+      const arr: Bet[] = []
+      snap.forEach((doc: any) => {
+        const data = doc.data() || {}
+        arr.push({ ...data, id: doc.id })
+      })
+
+      let updatedList = arr
+      if (isMore) {
+        setTodayBets((prev) => {
+          updatedList = [...prev, ...arr].sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+          return updatedList
+        })
+      } else {
+        updatedList = arr.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+        setTodayBets(updatedList)
+      }
+
+      if (snap.docs.length > 0) {
+        setLastDocToday(snap.docs[snap.docs.length - 1])
+      } else if (!isMore) {
+        setLastDocToday(null)
+      }
+
+      if (snap.docs.length < 5) {
+        setHasMoreToday(false)
+      } else {
+        setHasMoreToday(true)
+      }
+
+
+    } catch (err: any) {
+      console.error('Error fetching today completed winnings:', err)
+      setError(err.message || String(err))
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
     }
-  }, [cacheKeys])
+  }
+
+  const fetchUserBets = async (isMore = false) => {
+    if (!uid) return
+    if (isMore && !hasMoreUser) return
+
+    if (isMore) {
+      setLoadingMore(true)
+    } else {
+      setLoading(true)
+    }
+    setError(null)
+
+    try {
+      let query = db
+        .collection('users')
+        .doc(uid)
+        .collection('userbets')
+        .where('isWinner', '==', true)
+        .limit(5)
+
+      if (isMore && lastDocUser) {
+        query = query.startAfter(lastDocUser)
+      }
+
+      const snap = await query.get()
+      const arr: Bet[] = []
+      snap.forEach((doc: any) => {
+        const data = doc.data() || {}
+        arr.push({ ...data, id: doc.id })
+      })
+
+      let updatedList = arr
+      if (isMore) {
+        setUserBets((prev) => {
+          updatedList = [...prev, ...arr].sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+          return updatedList
+        })
+      } else {
+        updatedList = arr.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+        setUserBets(updatedList)
+      }
+
+      if (snap.docs.length > 0) {
+        setLastDocUser(snap.docs[snap.docs.length - 1])
+      } else if (!isMore) {
+        setLastDocUser(null)
+      }
+
+      if (snap.docs.length < 5) {
+        setHasMoreUser(false)
+      } else {
+        setHasMoreUser(true)
+      }
+
+
+    } catch (err: any) {
+      console.error('Error fetching user completed winnings:', err)
+      setError(err.message || String(err))
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }
 
   useEffect(() => {
-    // Fetch all bets ordered by createdAt then filter isWinner client-side
-    // (avoids requiring a composite Firestore index for where+orderBy)
     if (!uid) {
+      setError('Not signed in')
       setLoading(false)
-      setTodayBets([])
-      setUserBets([])
       return
     }
-    setLoading(true)
 
-    const userBetQuery: any = db.collection('users').doc(uid).collection('userbets').orderBy('createdAt', 'desc')
-    const todayCompletedQuery: any = db.collection('todaysCompletedBets').where('userId', '==', uid)
-
-    const unsubUserBets = userBetQuery.onSnapshot(
-      (snap: any) => {
-        const arr: Bet[] = []
-        snap.forEach((d: any) => {
-          const data = d.data() || {}
-          if (data.isWinner) arr.push({ ...data, id: d.id })
-        })
-        setUserBets(arr)
-        if (cacheKeys?.user) {
-          void AsyncStorage.setItem(cacheKeys.user, JSON.stringify(arr)).catch(() => {})
-        }
-        setLoading(false)
-      },
-      () => {
-        setUserBets([])
-        setLoading(false)
-      }
-    )
-
-    const unsubTodayBets = todayCompletedQuery.onSnapshot(
-      (snap: any) => {
-        const arr: Bet[] = []
-        snap.forEach((d: any) => {
-          const data = d.data() || {}
-          if (data.isWinner) arr.push({ ...data, id: d.id })
-        })
-        arr.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
-        setTodayBets(arr)
-        if (cacheKeys?.today) {
-          void AsyncStorage.setItem(cacheKeys.today, JSON.stringify(arr)).catch(() => {})
-        }
-        setLoading(false)
-      },
-      () => {
-        setTodayBets([])
-        setLoading(false)
-      }
-    )
-
-    return () => {
-      unsubUserBets()
-      unsubTodayBets()
+    if (showTodayOnly) {
+      setTodayBets([])
+      fetchTodayBets(false)
+    } else {
+      setUserBets([])
+      fetchUserBets(false)
     }
-  }, [uid])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, showTodayOnly])
+
+  const handleReadMore = () => {
+    if (loadingMore) return
+    if (showTodayOnly) {
+      fetchTodayBets(true)
+    } else {
+      fetchUserBets(true)
+    }
+  }
+
+  const renderFooter = () => {
+    const hasMore = showTodayOnly ? hasMoreToday : hasMoreUser
+    if (!hasMore) return null
+
+    return (
+      <TouchableOpacity
+        style={[styles.readMoreBtn, loadingMore && styles.readMoreBtnDisabled]}
+        onPress={handleReadMore}
+        disabled={loadingMore}
+      >
+        {loadingMore ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={styles.readMoreText}>Read More</Text>
+        )}
+      </TouchableOpacity>
+    )
+  }
 
   const FILTERS: { key: string; label: string; code?: string }[] = [
     { key: 'ALL', label: 'All' },
@@ -241,10 +321,14 @@ export default function MyWinningSection() {
     )
   }
 
-  if (loading && sourceBets.length === 0) return <View style={styles.center}><ActivityIndicator /></View>
-  if (!loading && (!displayedBets || displayedBets.length === 0)) return <View style={styles.center}><Text>No winnings found.</Text></View>
-
   const activeCount = useMemo(() => displayedBets.length, [displayedBets])
+
+  if (loading && sourceBets.length === 0) return <View style={styles.center}><ActivityIndicator size="small" /></View>
+  if (error && sourceBets.length === 0) return (
+    <View style={styles.center}>
+      <Text style={{ color: 'red' }}>{error}</Text>
+    </View>
+  )
 
   return (
     <View style={styles.container}>
@@ -270,11 +354,18 @@ export default function MyWinningSection() {
         </View>
       </View>
 
-      {displayedBets.length === 0 ? (
-        <View style={styles.center}><Text>No winnings found for selected filter.</Text></View>
-      ) : (
-        <FlatList data={displayedBets} keyExtractor={(i:any) => i.id || String(i)} renderItem={renderItem} contentContainerStyle={{ padding: 12 }} />
-      )}
+      <FlatList
+        data={displayedBets}
+        keyExtractor={(i: any) => i.id || String(i)}
+        renderItem={renderItem}
+        contentContainerStyle={{ padding: 12 }}
+        ListEmptyComponent={() => (
+          <View style={[styles.center, { marginTop: 40 }]}>
+            <Text style={{ color: '#666', fontSize: 16 }}>No winnings found</Text>
+          </View>
+        )}
+        ListFooterComponent={renderFooter}
+      />
     </View>
   )
 }
@@ -290,7 +381,7 @@ const styles = StyleSheet.create({
   toggleContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
   toggleLabel: { marginRight: 6, fontWeight: '700', color: '#111' },
   countBox: { marginLeft: 'auto', paddingHorizontal: 12 },
-  countText: { fontWeight: '800',fontSize:20 },
+  countText: { fontWeight: '800', fontSize: 20 },
   item: { backgroundColor: '#fff', padding: 12, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: '#eee' },
   game: { fontWeight: '700' },
   win: { fontWeight: '700', color: '#16a34a' },
@@ -313,4 +404,28 @@ const styles = StyleSheet.create({
   directionText: { fontSize: 12, fontWeight: '700' },
   directionTextOpen: { color: '#166534' },
   directionTextClose: { color: '#92400e' },
+  readMoreBtn: {
+    backgroundColor: '#0b1f4c',
+    paddingVertical: 12,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
+    marginHorizontal: 20,
+    shadowColor: '#0b1f4c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  readMoreBtnDisabled: {
+    backgroundColor: '#cbd5e1',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  readMoreText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
 })

@@ -1,69 +1,261 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Animated } from 'react-native'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Animated, Switch, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from 'expo-router'
 import { auth, db } from '../../firebaseConfig'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const toMillis = (value: any) => {
+  if (!value) return 0
+  if (typeof value?.toDate === 'function') {
+    const d = value.toDate()
+    return d instanceof Date ? d.getTime() : 0
+  }
+  if (typeof value?.seconds === 'number') return value.seconds * 1000
+  if (typeof value === 'number') return value
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime()
+}
+
+const formatDate = (value: any) => {
+  if (!value) return ''
+  if (typeof value?.toDate === 'function') {
+    return value.toDate().toLocaleString()
+  }
+  if (typeof value?.seconds === 'number') {
+    return new Date(value.seconds * 1000).toLocaleString()
+  }
+  if (typeof value === 'number') {
+    return new Date(value).toLocaleString()
+  }
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleString()
+}
 
 export default function MoneyAdded() {
-  const [loading, setLoading] = useState(true)
-  const [items, setItems] = useState<Array<any>>([])
+  const [loadingToday, setLoadingToday] = useState(true)
+  const [loadingUser, setLoadingUser] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [todayItems, setTodayItems] = useState<Array<any>>([])
+  const [userItems, setUserItems] = useState<Array<any>>([])
+  const [lastDocToday, setLastDocToday] = useState<any>(null)
+  const [lastDocUser, setLastDocUser] = useState<any>(null)
+  const [hasMoreToday, setHasMoreToday] = useState(true)
+  const [hasMoreUser, setHasMoreUser] = useState(true)
+  const [showTodayOnly, setShowTodayOnly] = useState(true)
   const animValues = useRef<Record<string, Animated.Value>>({})
 
+  const uid = auth.currentUser ? auth.currentUser.uid : null
   const navigation = useNavigation()
 
   useEffect(() => {
     navigation.setOptions({ title: 'Money Added' })
   }, [navigation])
 
+  // Hydrate cache
   useEffect(() => {
-    const user = auth.currentUser
-    if (!user) {
-      setItems([])
-      setLoading(false)
+    if (!uid) return
+    const cacheKeys = {
+      today: `moneyAdded:today:${uid}`,
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const todayRaw = await AsyncStorage.getItem(cacheKeys.today)
+        if (cancelled) return
+
+        if (todayRaw) {
+          const parsed = JSON.parse(todayRaw)
+          if (Array.isArray(parsed)) setTodayItems(parsed)
+        }
+      } catch {
+        // ignore cache errors
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [uid])
+
+  const fetchTodayItems = async (isMore = false) => {
+    if (!uid) return
+    if (isMore && !hasMoreToday) return
+
+    if (isMore) {
+      setLoadingMore(true)
+    } else {
+      setLoadingToday(true)
+    }
+    setError(null)
+
+    try {
+      let query = db
+        .collection('TodaysAddMoneyByGetway')
+        .where('userId', '==', uid)
+        .limit(5)
+
+      if (isMore && lastDocToday) {
+        query = query.startAfter(lastDocToday)
+      }
+
+      const snap = await query.get()
+      const arr: any[] = []
+      snap.forEach((doc: any) => {
+        const data = doc.data() || {}
+        arr.push({ ...data, id: doc.id })
+      })
+
+      let updatedList = arr
+      if (isMore) {
+        setTodayItems((prev) => {
+          updatedList = [...prev, ...arr].sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+          return updatedList
+        })
+      } else {
+        updatedList = arr.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+        setTodayItems(updatedList)
+      }
+
+      if (snap.docs.length > 0) {
+        setLastDocToday(snap.docs[snap.docs.length - 1])
+      } else if (!isMore) {
+        setLastDocToday(null)
+      }
+
+      if (snap.docs.length < 5) {
+        setHasMoreToday(false)
+      } else {
+        setHasMoreToday(true)
+      }
+
+      const cacheKeys = {
+        today: `moneyAdded:today:${uid}`,
+        user: `moneyAdded:user:${uid}`,
+      }
+      void AsyncStorage.setItem(cacheKeys.today, JSON.stringify(updatedList)).catch(() => {})
+    } catch (err: any) {
+      console.error('Error fetching today money added:', err)
+      setError(err.message || String(err))
+    } finally {
+      setLoadingToday(false)
+      setLoadingMore(false)
+    }
+  }
+
+  const fetchUserItems = async (isMore = false) => {
+    if (!uid) return
+    if (isMore && !hasMoreUser) return
+
+    if (isMore) {
+      setLoadingMore(true)
+    } else {
+      setLoadingUser(true)
+    }
+    setError(null)
+
+    try {
+      let query = db
+        .collection('users')
+        .doc(uid)
+        .collection('AddMoneyByGetway')
+        .orderBy('createdAt', 'desc')
+        .limit(5)
+
+      if (isMore && lastDocUser) {
+        query = query.startAfter(lastDocUser)
+      }
+
+      const snap = await query.get()
+      const arr: any[] = []
+      snap.forEach((doc: any) => {
+        const data = doc.data() || {}
+        arr.push({ ...data, id: doc.id })
+      })
+
+      let updatedList = arr
+      if (isMore) {
+        setUserItems((prev) => {
+          updatedList = [...prev, ...arr]
+          return updatedList
+        })
+      } else {
+        setUserItems(arr)
+      }
+
+      if (snap.docs.length > 0) {
+        setLastDocUser(snap.docs[snap.docs.length - 1])
+      } else if (!isMore) {
+        setLastDocUser(null)
+      }
+
+      if (snap.docs.length < 5) {
+        setHasMoreUser(false)
+      } else {
+        setHasMoreUser(true)
+      }
+
+      const cacheKeys = {
+        today: `moneyAdded:today:${uid}`,
+        user: `moneyAdded:user:${uid}`,
+      }
+      void AsyncStorage.setItem(cacheKeys.user, JSON.stringify(updatedList)).catch(() => {})
+    } catch (err: any) {
+      console.error('Error fetching user money added:', err)
+      setError(err.message || String(err))
+    } finally {
+      setLoadingUser(false)
+      setLoadingMore(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!uid) {
+      setTodayItems([])
+      setUserItems([])
+      setLoadingToday(false)
+      setLoadingUser(false)
       return
     }
 
-    const ref = db.collection('users').doc(user.uid).collection('AddMoneyByGetway').orderBy('createdAt', 'desc')
-    const unsub = ref.onSnapshot(snap => {
-      const arr: any[] = []
-      snap.docs.forEach(d => {
-        const data = d.data() || {}
-        arr.push({ id: d.id, ...data })
+    if (showTodayOnly) {
+      fetchTodayItems(false)
+    } else {
+      setUserItems([])
+      fetchUserItems(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, showTodayOnly])
+
+  const items = useMemo(() => (showTodayOnly ? todayItems : userItems), [showTodayOnly, todayItems, userItems])
+  const loading = showTodayOnly ? loadingToday : loadingUser
+
+  useEffect(() => {
+    try {
+      const animations: Animated.CompositeAnimation[] = []
+      items.forEach((it) => {
+        if (!animValues.current[it.id]) {
+          animValues.current[it.id] = new Animated.Value(0)
+        } else {
+          animValues.current[it.id].setValue(0)
+        }
+        animations.push(
+          Animated.timing(animValues.current[it.id], {
+            toValue: 1,
+            duration: 320,
+            useNativeDriver: true,
+          })
+        )
       })
-
-      try {
-        const animations: Animated.CompositeAnimation[] = []
-        arr.forEach((it) => {
-          if (!animValues.current[it.id]) {
-            animValues.current[it.id] = new Animated.Value(0)
-          } else {
-            animValues.current[it.id].setValue(0)
-          }
-          animations.push(
-            Animated.timing(animValues.current[it.id], {
-              toValue: 1,
-              duration: 320,
-              useNativeDriver: true,
-            })
-          )
-        })
-        if (animations.length) Animated.stagger(70, animations).start()
-      } catch {}
-
-      setItems(arr)
-      setLoading(false)
-    }, err => {
-      console.warn('money added listen error', err)
-      setLoading(false)
-    })
-
-    return () => unsub()
-  }, [])
+      if (animations.length) Animated.stagger(70, animations).start()
+    } catch {}
+  }, [items])
 
   const renderItem = ({ item }: { item: any }) => {
     const amount = Number(item.amount ?? item.amountPaid ?? 0) || 0
     const status = String(item.paymentstatus ?? item.paymentStatus ?? 'pending').toLowerCase()
-    const createdAt = item.createdAt && item.createdAt.toDate ? item.createdAt.toDate().toLocaleString() : (item.createdAt || '')
+    const createdAt = formatDate(item.createdAt)
 
     if (!animValues.current[item.id]) {
       animValues.current[item.id] = new Animated.Value(1)
@@ -109,20 +301,71 @@ export default function MoneyAdded() {
     )
   }
 
-  if (loading) return (
+  const handleReadMore = () => {
+    if (loadingMore) return
+    if (showTodayOnly) {
+      fetchTodayItems(true)
+    } else {
+      fetchUserItems(true)
+    }
+  }
+
+  const renderFooter = () => {
+    const hasMore = showTodayOnly ? hasMoreToday : hasMoreUser
+    if (!hasMore) return null
+
+    return (
+      <TouchableOpacity
+        style={[styles.readMoreBtn, loadingMore && styles.readMoreBtnDisabled]}
+        onPress={handleReadMore}
+        disabled={loadingMore}
+      >
+        {loadingMore ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={styles.readMoreText}>Read More</Text>
+        )}
+      </TouchableOpacity>
+    )
+  }
+
+  const renderHeader = () => (
+    <View style={styles.topBar}>
+      <View style={styles.toggleContainer}>
+        <Text style={styles.toggleLabel}>Today</Text>
+        <Switch
+          value={showTodayOnly}
+          onValueChange={setShowTodayOnly}
+          trackColor={{ false: '#d1d5db', true: '#0b1f4c' }}
+          thumbColor="#fff"
+        />
+      </View>
+    </View>
+  )
+
+  if (loading && items.length === 0) return (
     <SafeAreaView style={styles.container}><ActivityIndicator style={{ marginTop: 24 }} /></SafeAreaView>
+  )
+  if (error && items.length === 0) return (
+    <SafeAreaView style={styles.container}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ color: 'red', textAlign: 'center' }}>{error}</Text>
+      </View>
+    </SafeAreaView>
   )
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <FlatList
         data={items}
-        keyExtractor={i => i.id}
+        keyExtractor={i => i.id || String(Math.random())}
         renderItem={renderItem}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 28, paddingTop: 12 }}
+        ListHeaderComponent={renderHeader}
         ListEmptyComponent={() => (
-          <View style={{ padding: 16 }}><Text>No payment records found.</Text></View>
+          <View style={{ padding: 16, alignItems: 'center' }}><Text style={{ color: '#666', fontSize: 16 }}>No payment records found.</Text></View>
         )}
+        ListFooterComponent={renderFooter}
       />
     </SafeAreaView>
   )
@@ -155,4 +398,31 @@ const styles = StyleSheet.create({
   cardActions: { flexDirection: 'row', justifyContent: 'flex-end' },
   notCompletedSmall: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#fff7ed', borderWidth: StyleSheet.hairlineWidth, borderColor: '#fef3c7' },
   notCompletedSmallText: { color: '#b45309', fontWeight: '800', fontSize: 12 },
+  topBar: { paddingHorizontal: 16, paddingBottom: 10 },
+  toggleContainer: { flexDirection: 'row', alignItems: 'center' },
+  toggleLabel: { marginRight: 6, fontWeight: '800', color: '#0f172a' },
+  readMoreBtn: {
+    backgroundColor: '#0b1f4c',
+    paddingVertical: 12,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
+    marginHorizontal: 20,
+    shadowColor: '#0b1f4c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  readMoreBtnDisabled: {
+    backgroundColor: '#cbd5e1',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  readMoreText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
 })

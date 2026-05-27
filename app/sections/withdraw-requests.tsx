@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Animated, Switch } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useNavigation } from 'expo-router'
-import { auth, db } from '../../firebaseConfig'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useNavigation } from 'expo-router'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { ActivityIndicator, Animated, FlatList, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { auth, db } from '../../firebaseConfig'
 
 const toMillis = (value: any) => {
   if (!value) return 0
@@ -39,8 +39,14 @@ const computeSummary = (arr: any[]) => {
 export default function WithdrawRequests() {
   const [loadingToday, setLoadingToday] = useState(true)
   const [loadingUser, setLoadingUser] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [todayItems, setTodayItems] = useState<Array<any>>([])
   const [userItems, setUserItems] = useState<Array<any>>([])
+  const [lastDocToday, setLastDocToday] = useState<any>(null)
+  const [lastDocUser, setLastDocUser] = useState<any>(null)
+  const [hasMoreToday, setHasMoreToday] = useState(true)
+  const [hasMoreUser, setHasMoreUser] = useState(true)
   const [showTodayOnly, setShowTodayOnly] = useState(true)
   const [counts, setCounts] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 })
   const [totalAmount, setTotalAmount] = useState<number>(0)
@@ -68,6 +74,171 @@ export default function WithdrawRequests() {
     }
   }, [])
 
+  // Hydrate cache
+  useEffect(() => {
+    if (!uid) return
+    const cacheKeys = {
+      today: `withdrawRequests:today:${uid}`,
+      user: `withdrawRequests:user:${uid}`,
+    }
+    let cancelled = false
+      ; (async () => {
+        try {
+          const [todayRaw, userRaw] = await Promise.all([
+            AsyncStorage.getItem(cacheKeys.today),
+            AsyncStorage.getItem(cacheKeys.user),
+          ])
+          if (cancelled) return
+
+          if (todayRaw) {
+            const parsed = JSON.parse(todayRaw)
+            if (Array.isArray(parsed)) setTodayItems(parsed)
+          }
+          if (userRaw) {
+            const parsed = JSON.parse(userRaw)
+            if (Array.isArray(parsed)) setUserItems(parsed)
+          }
+        } catch {
+          // ignore cache errors
+        }
+      })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [uid])
+
+  const fetchTodayItems = async (isMore = false) => {
+    if (!uid) return
+    if (isMore && !hasMoreToday) return
+
+    if (isMore) {
+      setLoadingMore(true)
+    } else {
+      setLoadingToday(true)
+    }
+    setError(null)
+
+    try {
+      let query = db
+        .collection('todaysWithdrawalReq')
+        .where('requestedByUid', '==', uid)
+        .limit(5)
+
+      if (isMore && lastDocToday) {
+        query = query.startAfter(lastDocToday)
+      }
+
+      const snap = await query.get()
+      const arr: any[] = []
+      snap.forEach((doc: any) => {
+        const data = doc.data() || {}
+        arr.push({ ...data, id: doc.id })
+      })
+
+      let updatedList = arr
+      if (isMore) {
+        setTodayItems((prev) => {
+          updatedList = [...prev, ...arr].sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+          return updatedList
+        })
+      } else {
+        updatedList = arr.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
+        setTodayItems(updatedList)
+      }
+
+      if (snap.docs.length > 0) {
+        setLastDocToday(snap.docs[snap.docs.length - 1])
+      } else if (!isMore) {
+        setLastDocToday(null)
+      }
+
+      if (snap.docs.length < 5) {
+        setHasMoreToday(false)
+      } else {
+        setHasMoreToday(true)
+      }
+
+      const cacheKeys = {
+        today: `withdrawRequests:today:${uid}`,
+        user: `withdrawRequests:user:${uid}`,
+      }
+      void AsyncStorage.setItem(cacheKeys.today, JSON.stringify(updatedList)).catch(() => { })
+    } catch (err: any) {
+      console.error('Error fetching today withdrawal requests:', err)
+      setError(err.message || String(err))
+    } finally {
+      setLoadingToday(false)
+      setLoadingMore(false)
+    }
+  }
+
+  const fetchUserItems = async (isMore = false) => {
+    if (!uid) return
+    if (isMore && !hasMoreUser) return
+
+    if (isMore) {
+      setLoadingMore(true)
+    } else {
+      setLoadingUser(true)
+    }
+    setError(null)
+
+    try {
+      let query = db
+        .collection('users')
+        .doc(uid)
+        .collection('userWithdrawal')
+        .orderBy('createdAt', 'desc')
+        .limit(5)
+
+      if (isMore && lastDocUser) {
+        query = query.startAfter(lastDocUser)
+      }
+
+      const snap = await query.get()
+      const arr: any[] = []
+      snap.forEach((doc: any) => {
+        const data = doc.data() || {}
+        arr.push({ ...data, id: doc.id })
+      })
+
+      let updatedList = arr
+      if (isMore) {
+        setUserItems((prev) => {
+          updatedList = [...prev, ...arr]
+          return updatedList
+        })
+      } else {
+        setUserItems(arr)
+      }
+
+      if (snap.docs.length > 0) {
+        setLastDocUser(snap.docs[snap.docs.length - 1])
+      } else if (!isMore) {
+        setLastDocUser(null)
+      }
+
+      if (snap.docs.length < 5) {
+        setHasMoreUser(false)
+      } else {
+        setHasMoreUser(true)
+      }
+
+      const cacheKeys = {
+        today: `withdrawRequests:today:${uid}`,
+        user: `withdrawRequests:user:${uid}`,
+      }
+      void AsyncStorage.setItem(cacheKeys.user, JSON.stringify(updatedList)).catch(() => { })
+    } catch (err: any) {
+      console.error('Error fetching user withdrawal requests:', err)
+      setError(err.message || String(err))
+    } finally {
+      setLoadingUser(false)
+      setLoadingMore(false)
+    }
+  }
+
   useEffect(() => {
     if (!uid) {
       setTodayItems([])
@@ -77,112 +248,41 @@ export default function WithdrawRequests() {
       return
     }
 
-    setLoadingToday(true)
-    setLoadingUser(true)
-
-    const cacheKeys = {
-      today: `withdrawRequests:today:${uid}`,
-      user: `withdrawRequests:user:${uid}`,
+    if (showTodayOnly) {
+      fetchTodayItems(false)
+    } else {
+      fetchUserItems(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, showTodayOnly])
 
-    // hydrate cache immediately
-    let cancelled = false
-    ;(async () => {
-      try {
-        const [todayRaw, userRaw] = await Promise.all([
-          AsyncStorage.getItem(cacheKeys.today),
-          AsyncStorage.getItem(cacheKeys.user),
-        ])
-        if (cancelled) return
-
-        if (todayRaw) {
-          const parsed = JSON.parse(todayRaw)
-          if (Array.isArray(parsed)) setTodayItems(parsed)
-        }
-        if (userRaw) {
-          const parsed = JSON.parse(userRaw)
-          if (Array.isArray(parsed)) setUserItems(parsed)
-        }
-      } catch {
-        // ignore cache errors
-      }
-    })()
-
-    const userRef = db.collection('users').doc(uid).collection('userWithdrawal').orderBy('createdAt', 'desc')
-    const todayRefByUserId = db.collection('todaysWithdrawalReq').where('requestedByUid', '==', uid)
-    const todayRefByUid = db.collection('todaysWithdrawalReq').where('requestedByUid', '==', uid)
-
-    const unsubUser = userRef.onSnapshot(
-      (snap) => {
-        const arr: any[] = []
-        snap.docs.forEach((d) => {
-          const data = d.data() || {}
-          arr.push({ id: d.id, ...data })
-        })
-        setUserItems(arr)
-        void AsyncStorage.setItem(cacheKeys.user, JSON.stringify(arr)).catch(() => {})
-        setLoadingUser(false)
-      },
-      (err) => {
-        console.warn('withdraw requests listen error', err)
-        setLoadingUser(false)
-      }
-    )
-
-    let byUserIdArr: any[] | null = null
-    let byUidArr: any[] | null = null
-    const publishToday = () => {
-      const merged = new Map<string, any>()
-      ;(byUserIdArr || []).forEach((it) => merged.set(String(it.id), it))
-      ;(byUidArr || []).forEach((it) => merged.set(String(it.id), it))
-      const arr = Array.from(merged.values())
-      arr.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
-      setTodayItems(arr)
-      void AsyncStorage.setItem(cacheKeys.today, JSON.stringify(arr)).catch(() => {})
-      setLoadingToday(false)
+  const handleReadMore = () => {
+    if (loadingMore) return
+    if (showTodayOnly) {
+      fetchTodayItems(true)
+    } else {
+      fetchUserItems(true)
     }
+  }
 
-    const unsubTodayByUserId = todayRefByUserId.onSnapshot(
-      (snap) => {
-        const arr: any[] = []
-        snap.docs.forEach((d) => {
-          const data = d.data() || {}
-          arr.push({ id: d.id, ...data })
-        })
-        byUserIdArr = arr
-        publishToday()
-      },
-      (err) => {
-        console.warn('todays withdrawal listen error (userId)', err)
-        byUserIdArr = []
-        publishToday()
-      }
+  const renderFooter = () => {
+    const hasMore = showTodayOnly ? hasMoreToday : hasMoreUser
+    if (!hasMore) return null
+
+    return (
+      <TouchableOpacity
+        style={[styles.readMoreBtn, loadingMore && styles.readMoreBtnDisabled]}
+        onPress={handleReadMore}
+        disabled={loadingMore}
+      >
+        {loadingMore ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={styles.readMoreText}>Read More</Text>
+        )}
+      </TouchableOpacity>
     )
-
-    const unsubTodayByUid = todayRefByUid.onSnapshot(
-      (snap) => {
-        const arr: any[] = []
-        snap.docs.forEach((d) => {
-          const data = d.data() || {}
-          arr.push({ id: d.id, ...data })
-        })
-        byUidArr = arr
-        publishToday()
-      },
-      (err) => {
-        console.warn('todays withdrawal listen error (uid)', err)
-        byUidArr = []
-        publishToday()
-      }
-    )
-
-    return () => {
-      cancelled = true
-      unsubUser()
-      unsubTodayByUserId()
-      unsubTodayByUid()
-    }
-  }, [uid])
+  }
 
   const items = useMemo(() => (showTodayOnly ? todayItems : userItems), [showTodayOnly, todayItems, userItems])
   const loading = showTodayOnly ? loadingToday : loadingUser
@@ -201,7 +301,7 @@ export default function WithdrawRequests() {
         animations.push(Animated.timing(animValues.current[it.id], { toValue: 1, duration: 320, useNativeDriver: true }))
       })
       if (animations.length) Animated.stagger(60, animations).start()
-    } catch (e) {}
+    } catch (e) { }
   }, [items])
 
   const renderItem = ({ item }: { item: any }) => {
@@ -231,14 +331,14 @@ export default function WithdrawRequests() {
             <Text style={styles.smallLabel}>Requested On</Text>
             <Text style={styles.smallValue}>{dateOfReq} </Text>
           </View>
-         
+
         </View>
-         <View style={styles.rowSplit}>
+        <View style={styles.rowSplit}>
           <View style={styles.col}>
-              <Text style={styles.smallLabel}>Requested Time</Text>
-             <Text style={styles.smallValue}>{timeOfReq ? `${timeOfReq}` : ''}</Text>
+            <Text style={styles.smallLabel}>Requested Time</Text>
+            <Text style={styles.smallValue}>{timeOfReq ? `${timeOfReq}` : ''}</Text>
           </View>
-         
+
         </View>
 
         <View style={styles.rowSplit}>
@@ -286,7 +386,14 @@ export default function WithdrawRequests() {
   }
 
   if (loading && items.length === 0) return (
-    <SafeAreaView style={styles.container} edges={['left','right','bottom']}><ActivityIndicator style={{ marginTop: 24 }} /></SafeAreaView>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}><ActivityIndicator style={{ marginTop: 24 }} /></SafeAreaView>
+  )
+  if (error && items.length === 0) return (
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ color: 'red', textAlign: 'center' }}>{error}</Text>
+      </View>
+    </SafeAreaView>
   )
 
   const renderHeader = () => (
@@ -309,16 +416,19 @@ export default function WithdrawRequests() {
   )
 
   return (
-    <SafeAreaView style={styles.container} edges={['left','right','bottom']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <FlatList
         data={items}
-        keyExtractor={i => i.id}
+        keyExtractor={i => i.id || String(Math.random())}
         renderItem={renderItem}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20, paddingTop: 12 }}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={() => (
-          <View style={{ padding: 16 }}><Text>No withdraw requests found. .</Text></View>
+          <View style={{ padding: 16, alignItems: 'center' }}>
+            <Text style={{ color: '#666', fontSize: 16 }}>No withdraw requests found.</Text>
+          </View>
         )}
+        ListFooterComponent={renderFooter}
       />
     </SafeAreaView>
   )
@@ -349,4 +459,28 @@ const styles = StyleSheet.create({
   smallValue: { color: '#0f172a', fontWeight: '600', marginTop: 4, fontSize: 14 },
   approved: { color: '#16a34a' },
   rejected: { color: '#dc2626' },
+  readMoreBtn: {
+    backgroundColor: '#0b1f4c',
+    paddingVertical: 12,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
+    marginHorizontal: 20,
+    shadowColor: '#0b1f4c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  readMoreBtnDisabled: {
+    backgroundColor: '#cbd5e1',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  readMoreText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
 })

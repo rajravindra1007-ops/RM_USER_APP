@@ -1,8 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import messaging from '@react-native-firebase/messaging'
 import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
-import messaging from '@react-native-firebase/messaging'
 import { useRouter } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import {
@@ -71,11 +71,11 @@ function Particle({ delay, x, size, color, duration }: {
 }
 
 const PARTICLES = [
-  { delay: 0,    x: 10, size: 6, color: '#F4C430', duration: 7000 },
+  { delay: 0, x: 10, size: 6, color: '#F4C430', duration: 7000 },
   { delay: 1000, x: 25, size: 4, color: '#FF3B30', duration: 9000 },
   { delay: 2000, x: 60, size: 5, color: '#F4C430', duration: 6000 },
-  { delay: 500,  x: 80, size: 3, color: '#FFFFFF', duration: 8000 },
-  { delay: 3000, x: 45, size: 6, color: '#FF3B30', duration: 10000},
+  { delay: 500, x: 80, size: 3, color: '#FFFFFF', duration: 8000 },
+  { delay: 3000, x: 45, size: 6, color: '#FF3B30', duration: 10000 },
   { delay: 1500, x: 70, size: 4, color: '#F4C430', duration: 7500 },
 ]
 
@@ -89,11 +89,11 @@ function PulseRing({ delay }: { delay: number }) {
       Animated.sequence([
         Animated.delay(delay),
         Animated.parallel([
-          Animated.timing(scale,   { toValue: 1.55, duration: 2500, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 0,    duration: 2500, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1.55, duration: 2500, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 0, duration: 2500, easing: Easing.out(Easing.ease), useNativeDriver: true }),
         ]),
         Animated.parallel([
-          Animated.timing(scale,   { toValue: 1, duration: 0, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1, duration: 0, useNativeDriver: true }),
           Animated.timing(opacity, { toValue: 0.7, duration: 0, useNativeDriver: true }),
         ]),
       ])
@@ -138,16 +138,16 @@ export default function LoginScreen() {
   const shineAnim = useRef(new Animated.Value(-220)).current
 
   // ── new anims ───────────────────────────────────────────────────────────────
-  const headerSlide   = useRef(new Animated.Value(-40)).current
+  const headerSlide = useRef(new Animated.Value(-40)).current
   const headerOpacity = useRef(new Animated.Value(0)).current
-  const input1Slide   = useRef(new Animated.Value(-30)).current
+  const input1Slide = useRef(new Animated.Value(-30)).current
   const input1Opacity = useRef(new Animated.Value(0)).current
-  const input2Slide   = useRef(new Animated.Value(-30)).current
+  const input2Slide = useRef(new Animated.Value(-30)).current
   const input2Opacity = useRef(new Animated.Value(0)).current
-  const btnSlide      = useRef(new Animated.Value(30)).current
-  const btnOpacity    = useRef(new Animated.Value(0)).current
-  const regSlide      = useRef(new Animated.Value(30)).current
-  const regOpacity    = useRef(new Animated.Value(0)).current
+  const btnSlide = useRef(new Animated.Value(30)).current
+  const btnOpacity = useRef(new Animated.Value(0)).current
+  const regSlide = useRef(new Animated.Value(30)).current
+  const regOpacity = useRef(new Animated.Value(0)).current
 
   // accent bar glow pulse
   const accentGlow = useRef(new Animated.Value(0)).current
@@ -166,23 +166,23 @@ export default function LoginScreen() {
     // staggered entrance
     Animated.stagger(100, [
       Animated.parallel([
-        Animated.timing(headerSlide,   { toValue: 0, duration: 400, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(headerSlide, { toValue: 0, duration: 400, easing: Easing.out(Easing.exp), useNativeDriver: true }),
         Animated.timing(headerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
       ]),
       Animated.parallel([
-        Animated.timing(input1Slide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(input1Slide, { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
         Animated.timing(input1Opacity, { toValue: 1, duration: 350, useNativeDriver: true }),
       ]),
       Animated.parallel([
-        Animated.timing(input2Slide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(input2Slide, { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
         Animated.timing(input2Opacity, { toValue: 1, duration: 350, useNativeDriver: true }),
       ]),
       Animated.parallel([
-        Animated.timing(btnSlide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(btnSlide, { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
         Animated.timing(btnOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
       ]),
       Animated.parallel([
-        Animated.timing(regSlide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(regSlide, { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
         Animated.timing(regOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
       ]),
     ]).start()
@@ -210,105 +210,124 @@ export default function LoginScreen() {
 
 
   useEffect(() => {
-  // Request notification permission on login screen load
-  const requestNotificationPermission = async () => {
-    try {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync()
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync()
-        if (status !== 'granted') {
-          console.log('Notification permission denied')
+    // Request notification permission on login screen load
+    const requestNotificationPermission = async () => {
+      try {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync()
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync()
+          if (status !== 'granted') {
+            console.log('Notification permission denied')
+          }
         }
+      } catch (err) {
+        console.log('Permission request error:', err)
       }
-    } catch (err) {
-      console.log('Permission request error:', err)
     }
-  }
-  requestNotificationPermission()
+    requestNotificationPermission()
 
-  setDeviceId(String(Device.deviceName || 'unknown-device'))
+    setDeviceId(String(Device.deviceName || 'unknown-device'))
 
-  Animated.spring(logoScale, {
-    toValue: 1,
-    useNativeDriver: true,
-    damping: 8,
-    stiffness: 100,
-  }).start()
-
-  Animated.stagger(100, [
-    Animated.parallel([
-      Animated.timing(headerSlide,   { toValue: 0, duration: 400, easing: Easing.out(Easing.exp), useNativeDriver: true }),
-      Animated.timing(headerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-    ]),
-    Animated.parallel([
-      Animated.timing(input1Slide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
-      Animated.timing(input1Opacity, { toValue: 1, duration: 350, useNativeDriver: true }),
-    ]),
-    Animated.parallel([
-      Animated.timing(input2Slide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
-      Animated.timing(input2Opacity, { toValue: 1, duration: 350, useNativeDriver: true }),
-    ]),
-    Animated.parallel([
-      Animated.timing(btnSlide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
-      Animated.timing(btnOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
-    ]),
-    Animated.parallel([
-      Animated.timing(regSlide,   { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
-      Animated.timing(regOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
-    ]),
-  ]).start()
-
-  Animated.loop(
-    Animated.sequence([
-      Animated.timing(accentGlow, { toValue: 1, duration: 1200, useNativeDriver: true }),
-      Animated.timing(accentGlow, { toValue: 0, duration: 1200, useNativeDriver: true }),
-    ])
-  ).start()
-
-  Animated.loop(
-    Animated.timing(shineAnim, {
-      toValue: 220,
-      duration: 1800,
-      easing: Easing.linear,
+    Animated.spring(logoScale, {
+      toValue: 1,
       useNativeDriver: true,
-    })
-  ).start()
+      damping: 8,
+      stiffness: 100,
+    }).start()
 
-  loadSavedLogin()
-}, [])
+    Animated.stagger(100, [
+      Animated.parallel([
+        Animated.timing(headerSlide, { toValue: 0, duration: 400, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(headerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(input1Slide, { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(input1Opacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(input2Slide, { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(input2Opacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(btnSlide, { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(btnOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(regSlide, { toValue: 0, duration: 350, easing: Easing.out(Easing.exp), useNativeDriver: true }),
+        Animated.timing(regOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+      ]),
+    ]).start()
 
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(accentGlow, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(accentGlow, { toValue: 0, duration: 1200, useNativeDriver: true }),
+      ])
+    ).start()
 
-useEffect(() => {
-  Notifications.requestPermissionsAsync().catch(() => {})
-
-  const unsub = messaging().onMessage(async msg => {
-    try {
-      const title = msg?.notification?.title || String(msg?.data?.title || 'Notification')
-      const body = msg?.notification?.body || String(msg?.data?.body || '')
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          sound: 'default'
-        },
-        trigger: null
+    Animated.loop(
+      Animated.timing(shineAnim, {
+        toValue: 220,
+        duration: 1800,
+        easing: Easing.linear,
+        useNativeDriver: true,
       })
-    } catch (err) {}
-  })
+    ).start()
 
-  return () => {
-    try {
-      unsub()
-    } catch (_) {}
-  }
-}, [])
+    loadSavedLogin()
+  }, [])
+
+  useEffect(() => {
+
+    const subscribeToTopic = async () => {
+      try {
+
+        await messaging().registerDeviceForRemoteMessages()
+
+        await messaging().subscribeToTopic('allUsers')
+
+        console.log('Subscribed to allUsers topic')
+
+      } catch (e) {
+
+        console.warn('Topic subscription failed', e)
+      }
+    }
+
+    subscribeToTopic()
+
+  }, [])
+  useEffect(() => {
+    Notifications.requestPermissionsAsync().catch(() => { })
+
+    const unsub = messaging().onMessage(async msg => {
+      try {
+        const title = msg?.notification?.title || String(msg?.data?.title || 'Notification')
+        const body = msg?.notification?.body || String(msg?.data?.body || '')
+
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+            sound: 'default'
+          },
+          trigger: null
+        })
+      } catch (err) { }
+    })
+
+    return () => {
+      try {
+        unsub()
+      } catch (_) { }
+    }
+  }, [])
 
   const loadSavedLogin = async () => {
     try {
-      const savedPhone    = await AsyncStorage.getItem('savedPhone')
+      const savedPhone = await AsyncStorage.getItem('savedPhone')
       const savedPassword = await AsyncStorage.getItem('savedPassword')
-      if (savedPhone)    setPhone(savedPhone)
+      if (savedPhone) setPhone(savedPhone)
       if (savedPassword) setPassword(savedPassword)
     } catch (error) {
       console.log('Error loading saved login:', error)
@@ -343,8 +362,8 @@ useEffect(() => {
 
     try {
       const email = phoneToEmail(`${phone}`)
-      const cred  = await auth.signInWithEmailAndPassword(email, password)
-      const uid   = cred.user.uid
+      const cred = await auth.signInWithEmailAndPassword(email, password)
+      const uid = cred.user.uid
       await db.collection('users').doc(uid).set({ deviceId }, { merge: true })
       await AsyncStorage.setItem('savedPhone', phone)
       await AsyncStorage.setItem('savedPassword', password)

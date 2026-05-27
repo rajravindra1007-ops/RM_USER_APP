@@ -64,6 +64,7 @@ const sections = [
   // { title: 'Chart', route: '/sections/chart' as const },
   { title: 'Profile', route: '/sections/profile' as const },
   { title: 'Bid History', route: '/sections/bid-history' as const },
+  { title: "Today's Completed Bets", route: '/sections/todays-completed-bets' as const },
   { title: 'My Winning', route: '/sections/my-winning' as const },
   // { title: 'Account Statement', route: '/sections/account-statement' as const },
   { title: 'Bank Details', route: '/sections/bank-details' as const },
@@ -86,6 +87,7 @@ const getSectionIcon = (title: string): React.ComponentProps<typeof MaterialIcon
     case 'Profile': return 'person';
     case 'Bid History': return 'receipt-long';
     case 'My Winning': return 'emoji-events';
+    case "Today's Completed Bets": return 'done-all';
     case 'Account Statement': return 'article';
     case 'Bank Details': return 'account-balance';
     case 'Money Added': return 'account-balance-wallet';
@@ -562,15 +564,15 @@ export default function HomeScreen() {
               style={styles.drawerButton}
             >
               <TouchableOpacity
-              onPress={() => (open ? closeDrawer() : openDrawer())}
-              style={styles.drawerButton}
-            >
-              <View style={{ justifyContent: 'center', alignItems: 'center', width: 40, height: 40 }}>
-                <View style={styles.hamburger} />
-                <View style={styles.hamburger} />
-                <View style={styles.hamburger} />
-              </View>
-            </TouchableOpacity>
+                onPress={() => (open ? closeDrawer() : openDrawer())}
+                style={styles.drawerButton}
+              >
+                <View style={{ justifyContent: 'center', alignItems: 'center', width: 40, height: 40 }}>
+                  <View style={styles.hamburger} />
+                  <View style={styles.hamburger} />
+                  <View style={styles.hamburger} />
+                </View>
+              </TouchableOpacity>
             </TouchableOpacity>
 
             <View style={styles.titleContainer}>
@@ -659,11 +661,14 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </Link>
 
+
               <Link href="/sections/bid-history" asChild>
                 <TouchableOpacity style={styles.actionBtn}>
                   <MaterialIcons name="history" size={20} color="#000" />
                   <Text style={styles.actionText}>Bid History</Text>
+
                 </TouchableOpacity>
+
               </Link>
             </View>
           </Animated.View>

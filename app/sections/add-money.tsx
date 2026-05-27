@@ -175,11 +175,15 @@ export default function AddMoneySection() {
       setLoading(true)
 
       let rawMobile = ''
+      let actualName = ''
       try {
         const userDoc = await db.collection('users').doc(user.uid).get()
         if (userDoc.exists) {
           const udata: any = userDoc.data() || {}
           rawMobile = String(udata.phone || udata.mobile || '')
+          actualName = String(
+            udata.name ||
+            '')
         }
       } catch { }
 
@@ -189,7 +193,7 @@ export default function AddMoneySection() {
       const payload: any = {
         userId: user.uid,
         amount: amt,
-        customer_name: user.displayName || 'User',
+        customer_name: actualName || user.displayName || 'User',
       }
 
       if (mobile10.length === 10) {
